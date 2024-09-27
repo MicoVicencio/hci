@@ -113,7 +113,7 @@ class App:
     def load_tasks_from_file(self):
         try:
             # Open the JSON file and load the data
-            with open('task.json', 'r') as json_file:
+            with open('HCI project/task.json', 'r') as json_file:
                 self.alltask = json.load(json_file)  # Load data into self.alltask
                 print("Tasks loaded successfully:", self.alltask)
         except FileNotFoundError:
@@ -202,7 +202,7 @@ class App:
         print(self.alltask)
 
         # Save the entire alltask dictionary to a JSON file
-        filename = 'task.json'
+        filename = 'HCI project/task.json'
         with open(filename, 'w') as json_file:
                 json.dump(self.alltask, json_file, indent=4)  # Save the entire dictionary
 
