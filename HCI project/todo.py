@@ -8,6 +8,7 @@ class App:
         self.root = root
         self.root.geometry("1230x600")
         self.alltask = {}
+        
         # Create the main frame
                 # Create the main frame
         frontFrame = tk.Frame(self.root, width=1100, height=500, bg="white")
@@ -107,6 +108,22 @@ class App:
         a.image = ad
 
         a.bind("<Button-1>", self.add_List)
+        self.load_tasks_from_file()
+        
+    def load_tasks_from_file(self):
+        try:
+            # Open the JSON file and load the data
+            with open('task.json', 'r') as json_file:
+                self.alltask = json.load(json_file)  # Load data into self.alltask
+                print("Tasks loaded successfully:", self.alltask)
+        except FileNotFoundError:
+            print("The file 'task.json' was not found.")
+        except json.JSONDecodeError:
+            print("Error decoding JSON from the file.")
+        except Exception as e:
+            print("An error occurred:", str(e))
+            
+        self.add_listbox()
 
 
     def add_listbox(self):
@@ -164,28 +181,40 @@ class App:
         title = self.title_entry.get()
         due_date = self.full_time
         cat_value = self.category.get()
-        task_txt = self.description.get("1.0",tk.END)
+        task_txt = self.description.get("1.0", tk.END)
         self.current_size_of_dicttask = len(self.alltask)
         
+        # Create a task_info dictionary
         task_info = {
-            "title":title,
-            "due_date":due_date,
-            "category":cat_value,
-            "context":task_txt
+                "title": title,
+                "due_date": due_date,
+                "category": cat_value,
+                "context": task_txt
         }
+
+        # Create a unique task key for the new task
         task = "task" + str(self.current_size_of_dicttask + 1)
+
+        # Add the new task to the alltask dictionary
         self.alltask[task] = task_info
-        
+
+        # Print the current alltask dictionary to the console
         print(self.alltask)
+
+        # Save the entire alltask dictionary to a JSON file
         filename = 'task.json'
-        with open(filename,'w') as json_file:
-            json.dump(task_info,json_file,indent=4)
-            
-        with open(filename,'r') as json_file:
-            load = json.load(json_file)
+        with open(filename, 'w') as json_file:
+                json.dump(self.alltask, json_file, indent=4)  # Save the entire dictionary
+
+        # Load the data back from the JSON file and print it
+        with open(filename, 'r') as json_file:
+                load = json.load(json_file)
         print(load)    
+
+        # Update the Listbox and close the Toplevel window
         self.add_listbox()
         self.createList.destroy()
+
         
     def display_selected_task(self, event):
         # Create a new Toplevel window to show task details
