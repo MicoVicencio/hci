@@ -23,7 +23,7 @@ class App:
         frontFrame.grid_rowconfigure(2, weight=1)  # Result frame row
 
         # Load and resize the logo image
-        logo = Image.open("logo.png")
+        logo = Image.open("HCI project/logo.png")
         logo = logo.resize((190, 130), Image.LANCZOS)
         img = ImageTk.PhotoImage(logo)
 
@@ -37,7 +37,7 @@ class App:
         bell_exit_frame.grid(row=0, column=2, padx=10, pady=10, sticky="ne")
 
         # Load and resize the bell image
-        bell = Image.open("bell.png")
+        bell = Image.open("HCI project/bell.png")
         bell = bell.resize((70, 60), Image.LANCZOS)
         bel = ImageTk.PhotoImage(bell)
 
@@ -47,7 +47,7 @@ class App:
         be.image = bel
 
         # Load and resize the exit image
-        exit = Image.open("exit.png")
+        exit = Image.open("HCI project/exit.png")
         exit = exit.resize((70, 60), Image.LANCZOS)
         exi = ImageTk.PhotoImage(exit)
 
@@ -57,7 +57,7 @@ class App:
         ex.image = exi
 
         # Load and resize the search image
-        search = Image.open("search.png")
+        search = Image.open("HCI project/search.png")
         search = search.resize((40, 40), Image.LANCZOS)  # Reduced size for better alignment
         searc = ImageTk.PhotoImage(search)
 
@@ -98,7 +98,7 @@ class App:
         
 
         # Load and resize the add image
-        add = Image.open("add.png")
+        add = Image.open("HCI project/add.png")
         add = add.resize((70, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add)
 
