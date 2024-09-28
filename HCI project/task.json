@@ -1,20 +1,3 @@
 {
-    "task1": {
-        "title": "dsadasd",
-        "due_date": "9/28/24 1:00 AM",
-        "category": "Home",
-        "context": "asdadsad\n"
-    },
-    "task2": {
-        "title": "kalbo",
-        "due_date": "9/28/24 1:00 AM",
-        "category": "Home",
-        "context": "joric\n\n"
-    },
-    "task3": {
-        "title": "bukojuice",
-        "due_date": "9/28/24 1:00 AM",
-        "category": "Personal",
-        "context": "dkasokdosa\n"
-    }
+
 }

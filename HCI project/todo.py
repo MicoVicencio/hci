@@ -12,7 +12,6 @@ class App:
         self.root.title("To do List")
         
         # Create the main frame
-                # Create the main frame
         frontFrame = tk.Frame(self.root, width=1100, height=500, bg="white")
         frontFrame.pack_propagate(False)  # Prevent the frame from resizing to fit its contents
         frontFrame.pack(padx=10, pady=10)
@@ -20,8 +19,8 @@ class App:
         # Configure the grid to manage layout properly
         frontFrame.grid_columnconfigure(0, weight=1)  # Left side (logo column)
         frontFrame.grid_columnconfigure(1, weight=3)  # Middle section
-        frontFrame.grid_columnconfigure(2, weight=1)  # Right side (bell/exit)
-        frontFrame.grid_columnconfigure(3, weight=1)  # For Add button
+        frontFrame.grid_columnconfigure(2, weight=1)  # For Add button
+        frontFrame.grid_columnconfigure(3, weight=1)  # Right side (bell/exit)
         frontFrame.grid_rowconfigure(2, weight=1)  # Result frame row
 
         # Load and resize the logo image
@@ -36,7 +35,7 @@ class App:
 
         # Create a frame for bell and exit icons (Right side, row 0)
         bell_exit_frame = tk.Frame(frontFrame, bg="white")
-        bell_exit_frame.grid(row=0, column=2, padx=10, pady=10, sticky="ne")
+        bell_exit_frame.grid(row=0, column=3, padx=10, pady=10, sticky="ne")  # Changed to column 3
 
         # Load and resize the bell image
         bell = Image.open("HCI project/bell.png")
@@ -49,9 +48,9 @@ class App:
         be.image = bel
 
         # Load and resize the exit image
-        exit = Image.open("HCI project/exit.png")
-        exit = exit.resize((70, 60), Image.LANCZOS)
-        exi = ImageTk.PhotoImage(exit)
+        exit_img = Image.open("HCI project/exit.png")  # Changed variable name to avoid conflict
+        exit_img = exit_img.resize((70, 60), Image.LANCZOS)
+        exi = ImageTk.PhotoImage(exit_img)
 
         # Create and place the exit label in the bell_exit_frame
         ex = tk.Label(bell_exit_frame, image=exi, bg="white")
@@ -89,20 +88,18 @@ class App:
         # Create a scrollbar for the listbox
         scrollbar = tk.Scrollbar(self.resultFrame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.title = tk.Label(self.resultFrame,text="Tasks:",font=("Arial",15))
+        self.title = tk.Label(self.resultFrame, text="Tasks:", font=("Arial", 15))
         self.title.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.searchBar.bind("<Return>", self.search_on_enter)
-        
 
         # Create the Listbox widget inside the resultFrame
-        self.listbox = tk.Listbox(self.resultFrame, yscrollcommand=scrollbar.set, width=1000, height=300,font=("Arial",15))
+        self.listbox = tk.Listbox(self.resultFrame, yscrollcommand=scrollbar.set, width=1000, height=300, font=("Arial", 15))
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        self.listbox.bind("<<ListboxSelect>>",self.display_selected_task)
+        self.listbox.bind("<<ListboxSelect>>", self.display_selected_task)
 
         # Configure the scrollbar to work with the Listbox
         scrollbar.config(command=self.listbox.yview)
-        
 
         # Load and resize the add image
         add = Image.open("HCI project/add.png")
@@ -111,7 +108,7 @@ class App:
 
         # Create and place the add label in the grid
         a = tk.Label(frontFrame, image=ad, bg="white")
-        a.grid(row=3, column=4, padx=10, pady=10)
+        a.grid(row=3, column=3, padx=10, pady=10)  # Adjusted to column 2
         a.image = ad
 
         a.bind("<Button-1>", self.add_List)
@@ -180,20 +177,19 @@ class App:
         title.pack(padx=20,pady=20)
         
         self.tit = "Title:"
-        self.due = "Due Date:"
         
         self.title_entry = tk.Entry(self.createList,width=30,font=("Arial",15),fg="#518D45")
         self.title_entry.pack(padx=20,pady=20,ipady=10)
         self.title_entry.insert(0, self.tit)
         
-        self.duedate = tk.Button(self.createList,width=30,text="Due Date",command=self.showCalendar,font=("Arial",14),fg="#518D45")
+        self.duedate = tk.Button(self.createList,width=30,text="Due Date:",command=self.showCalendar,font=("Arial",14),fg="#518D45")
         self.duedate.pack(padx=20,pady=20)
         
         self.title_entry.bind('<FocusIn>', self.on_entry_clickTitle)
         self.title_entry.bind('<FocusOut>', self.on_focusoutTitle)
         
         
-        self.duedate = tk.Button(self.createList,width=40,height=10,text="Due Date",command=self.showCalendar)
+        
         
         self.options  = ["Academic", "Personal", "Goals", "Home"]
         self.category = ttk.Combobox(self.createList,values=self.options,font=("Arial",15),foreground="#518D45")
