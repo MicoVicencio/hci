@@ -3,11 +3,13 @@ from PIL import Image, ImageTk
 from tkinter import ttk
 from tkcalendar import DateEntry
 import json
+import sys
 class App:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1230x600")
         self.alltask = {}
+        self.root.title("To do List")
         
         # Create the main frame
                 # Create the main frame
@@ -55,6 +57,7 @@ class App:
         ex = tk.Label(bell_exit_frame, image=exi, bg="white")
         ex.pack(side="left", padx=5)
         ex.image = exi
+        ex.bind("<Button-1>", self.exit_program)
 
         # Load and resize the search image
         search = Image.open("HCI project/search.png")
@@ -86,6 +89,10 @@ class App:
         # Create a scrollbar for the listbox
         scrollbar = tk.Scrollbar(self.resultFrame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.title = tk.Label(self.resultFrame,text="Tasks:",font=("Arial",15))
+        self.title.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.searchBar.bind("<Return>", self.search_on_enter)
+        
 
         # Create the Listbox widget inside the resultFrame
         self.listbox = tk.Listbox(self.resultFrame, yscrollcommand=scrollbar.set, width=1000, height=300,font=("Arial",15))
@@ -109,6 +116,13 @@ class App:
 
         a.bind("<Button-1>", self.add_List)
         self.load_tasks_from_file()
+    
+    def exit_program(self,event):
+        self.root.destroy()
+        sys.exit()  # Ensures the entire process terminates
+        
+    def search_on_enter(self, event):
+        self.search()  # Call the search method
         
     def load_tasks_from_file(self):
         try:
@@ -134,6 +148,21 @@ class App:
         for task_key, task_info in self.alltask.items():
             self.listbox.insert(tk.END, task_info["title"])
             
+    def search(self):
+        # Get the value from the search bar
+        self.value_search = self.searchBar.get().lower()  # Convert input to lowercase for case-insensitive search
+    
+    # Clear the Listbox before adding new results
+        self.listbox.delete(0, tk.END)
+    
+    # Iterate through all tasks and search for titles that match
+        for task_key, task_info in self.alltask.items():
+            title = task_info.get("title", "").lower()  # Convert title to lowercase
+            if self.value_search in title:
+                self.listbox.insert(tk.END, task_info["title"]) 
+        
+        
+                
             
     def on_entry_clickSearch(self, event):
         if self.searchBar.get() == self.searchbar_placeholder:

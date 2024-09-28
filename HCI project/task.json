@@ -1,26 +1,20 @@
 {
     "task1": {
-        "title": "dasdasd",
-        "due_date": "9/27/24 1:00 AM",
-        "category": "asdas",
-        "context": "dasda231\n"
+        "title": "dsadasd",
+        "due_date": "9/28/24 1:00 AM",
+        "category": "Home",
+        "context": "asdadsad\n"
     },
     "task2": {
-        "title": "asdasdasdasdasd",
-        "due_date": "9/27/24 1:00 AM",
+        "title": "kalbo",
+        "due_date": "9/28/24 1:00 AM",
         "category": "Home",
-        "context": "asdasdasd\n"
+        "context": "joric\n\n"
     },
     "task3": {
-        "title": "asdasdasdasd",
-        "due_date": "9/27/24 1:00 AM",
-        "category": "asdasd",
-        "context": "asdasdasdasdas\n"
-    },
-    "task4": {
-        "title": "31231312321",
-        "due_date": "9/27/24 1:00 AM",
-        "category": "Home",
-        "context": "1231231231231\n"
+        "title": "bukojuice",
+        "due_date": "9/28/24 1:00 AM",
+        "category": "Personal",
+        "context": "dkasokdosa\n"
     }
 }
