@@ -4,6 +4,9 @@ from tkinter import ttk
 from tkcalendar import DateEntry
 import json
 import sys
+import os
+
+
 class App:
     def __init__(self, root):
         self.root = root
@@ -146,7 +149,7 @@ class App:
         
         # Loop through the alltask dictionary and add titles to the Listbox
         for task_key, task_info in self.alltask.items():
-            self.listbox.insert(tk.END, task_info["title"])
+            self.listbox.insert(tk.END, task_info["category"])
             
     def search(self):
         # Get the value from the search bar
@@ -187,7 +190,7 @@ class App:
         self.task_combo.pack(pady=10)
 
         # Add buttons for actions
-        self.add_task_button = tk.Button(self.task_chooser, text="Next", font=("Arial", 12), command=self.add_task)
+        self.add_task_button = tk.Button(self.task_chooser, text="Next", font=("Arial", 12), command=self.open_subcategory_window)
         self.add_task_button.pack(pady=10)
 
         
@@ -208,6 +211,47 @@ class App:
 
         # Set the first task as default in the task combo box
         self.task_combo.current(0)
+    
+    
+    
+    def open_subcategory_window(self):
+        self.subcategory_window = tk.Toplevel(self.root)
+        self.subcategory_window.title("Task Subcategory")
+
+        # Set a larger size for the window
+        self.subcategory_window.geometry("400x300")
+
+        # Subject Entry
+        self.subject_label = tk.Label(self.subcategory_window, text="Subject:", font=('Arial', 12))
+        self.subject_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')  # Align to the west
+        self.subject_entry = tk.Entry(self.subcategory_window, font=('Arial', 12), width=30)
+        self.subject_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        # Description Entry
+        self.description_label = tk.Label(self.subcategory_window, text="Description:", font=('Arial', 12))
+        self.description_label.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+        self.description_entry = tk.Text(self.subcategory_window, height=5, width=30, font=('Arial', 12))
+        self.description_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Due Date Label
+        self.due_date_label = tk.Label(self.subcategory_window, text="Due Date:", font=('Arial', 12))
+        self.due_date_label.grid(row=2, column=0, padx=10, pady=10, sticky='w')
+
+        # Due Date Button
+        self.due_date_button = tk.Button(self.subcategory_window, text="Select Due Date", command=self.showCalendar, font=('Arial', 12), width=20)
+        self.due_date_button.grid(row=2, column=1, padx=10, pady=10)
+
+        # Submit Button
+        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=self.submit_task, font=('Arial', 12), width=20)
+        self.submit_button.grid(row=3, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
+
+        # Make the layout more spacious
+        for i in range(4):
+            self.subcategory_window.grid_rowconfigure(i, weight=1)
+        for j in range(2):
+            self.subcategory_window.grid_columnconfigure(j, weight=1)
+
+
         
     def add_task(self):
         # Get the selected task from the task combo box
@@ -226,76 +270,50 @@ class App:
         if not self.searchBar.get():
             self.searchBar.insert(0, self.searchbar_placeholder)
             
-    def add_List(self,event):
-        self.createList = tk.Toplevel()
-        self.createList.geometry("700x800")
-        self.createList.config(bg="#518D45")
-        title = tk.Label(self.createList,text="Adding New Task",font=("Arial",20),bg="#518D45",fg="white")
-        title.pack(padx=20,pady=20)
+    
         
-        self.tit = "Title:"
-        
-        self.title_entry = tk.Entry(self.createList,width=30,font=("Arial",15),fg="#518D45")
-        self.title_entry.pack(padx=20,pady=20,ipady=10)
-        self.title_entry.insert(0, self.tit)
-        
-        self.duedate = tk.Button(self.createList,width=30,text="Due Date:",command=self.showCalendar,font=("Arial",14),fg="#518D45")
-        self.duedate.pack(padx=20,pady=20)
-        
-        self.title_entry.bind('<FocusIn>', self.on_entry_clickTitle)
-        self.title_entry.bind('<FocusOut>', self.on_focusoutTitle)
-        
-        
-        
-        
-        self.options  = ["Academic", "Personal", "Goals", "Home"]
-        self.category = ttk.Combobox(self.createList,values=self.options,font=("Arial",15),foreground="#518D45")
-        self.category.set("Select Category")
-        self.category.pack(padx=20,pady=20)
-        
-        self.description = tk.Text(self.createList,width=55,height=15,font=("Arial",15),fg="#518D45")
-        self.description.pack(padx=20,pady=20)
-        
-        save = tk.Button(self.createList,text="Save",font=("Arial",15),fg="#518D45",command=self.getDetails)
-        save.pack(padx=20,pady=20)
-        
-    def getDetails(self):
-        title = self.title_entry.get()
-        due_date = self.full_time
-        cat_value = self.category.get()
-        task_txt = self.description.get("1.0", tk.END)
-        self.current_size_of_dicttask = len(self.alltask)
-        
+    def submit_task(self):
+        # Retrieve input values from the entry widgets
+        subject = self.subject_entry.get()
+        description = self.description_entry.get("1.0", tk.END).strip()
+        due_date = self.due_date_entry.get()
+        priority = self.priority_combobox.get()
+
         # Create a task_info dictionary
         task_info = {
-                "title": title,
-                "due_date": due_date,
-                "category": cat_value,
-                "context": task_txt
+            "subject": subject,
+            "description": description,
+            "due_date": due_date,
+            "priority": priority
         }
 
-        # Create a unique task key for the new task
-        task = "task" + str(self.current_size_of_dicttask + 1)
-
-        # Add the new task to the alltask dictionary
-        self.alltask[task] = task_info
-
-        # Print the current alltask dictionary to the console
-        print(self.alltask)
-
-        # Save the entire alltask dictionary to a JSON file
+        # Load existing tasks or initialize an empty dictionary
         filename = 'HCI project/task.json'
+        if os.path.exists(filename):
+            with open(filename, 'r') as json_file:
+                all_tasks = json.load(json_file)
+        else:
+            all_tasks = {}
+
+        # Create a unique task key for the new task
+        current_size_of_task_dict = len(all_tasks)
+        task_key = f"task{current_size_of_task_dict + 1}"
+
+        # Add the new task to the all_tasks dictionary
+        all_tasks[task_key] = task_info
+
+        # Save the updated all_tasks dictionary to the JSON file
         with open(filename, 'w') as json_file:
-                json.dump(self.alltask, json_file, indent=4)  # Save the entire dictionary
+            json.dump(all_tasks, json_file, indent=4)
 
-        # Load the data back from the JSON file and print it
-        with open(filename, 'r') as json_file:
-                load = json.load(json_file)
-        print(load)    
+        # Print confirmation of the submitted task
+        print(f"Task Submitted: {task_info}")
 
-        # Update the Listbox and close the Toplevel window
-        self.add_listbox()
-        self.createList.destroy()
+        # Clear the fields after submission
+        self.subject_entry.delete(0, tk.END)
+        self.description_entry.delete("1.0", tk.END)
+        self.priority_combobox.current(1)  # Reset to "Medium"
+        self.due_date_entry.set_date('')  # Clear the date entry
 
         
     def display_selected_task(self, event):
@@ -326,49 +344,69 @@ class App:
 
   
        
-    def showCalendar(self):
+    def showCalendar(self,event):
         self.calendar = tk.Toplevel()
-        # DateEntry for date selection
-        self.date_label = tk.Label(self.calendar, text="Due Date:")
-        self.date_label.grid(row=0, column=0, padx=5, pady=5)
-        self.date_entry = DateEntry(self.calendar, width=12, background='darkblue', foreground='white', borderwidth=2)
-        self.date_entry.grid(row=0, column=1, padx=5, pady=5)
-
-        # Comboboxes for hours and minutes
-        self.hour_label = tk.Label(self.calendar, text="Hour:")
-        self.hour_label.grid(row=1, column=0, padx=5, pady=5)
-        self.hour_combobox = ttk.Combobox(self.calendar, values=list(range(1, 13)), width=5)  # 1 to 12
-        self.hour_combobox.grid(row=1, column=1, padx=5, pady=5)
-        self.hour_combobox.current(0)  # Set default to 1
-
-        self.minute_label = tk.Label(self.calendar, text="Minute:")
-        self.minute_label.grid(row=2, column=0, padx=5, pady=5)
-        self.minute_combobox = ttk.Combobox(self.calendar, values=list(range(60)), width=5)  # 0 to 59
-        self.minute_combobox.grid(row=2, column=1, padx=5, pady=5)
-        self.minute_combobox.current(0)  # Set default to a
-
-        # Combobox for AM/PM selection
-        self.ampm_label = tk.Label(self.calendar, text="AM/PM:")
-        self.ampm_label.grid(row=3, column=0, padx=5, pady=5)
-        self.ampm_combobox = ttk.Combobox(self.calendar, values=["AM", "PM"], width=5)
-        self.ampm_combobox.grid(row=3, column=1, padx=5, pady=5)
-        self.ampm_combobox.current(0)  # Set default to AM
-
+        
+        # Date selection
+        self.date_label = tk.Label(self.calendar, text="Due Date:", font=("Helvetica", 14))
+        self.date_label.grid(row=0, column=0)  # Adjusted padding
+        self.date_entry = DateEntry(self.calendar, width=16, background='darkblue', foreground='white', borderwidth=2, font=("Helvetica", 14))
+        self.date_entry.grid(row=0, column=1)  # Adjusted padding
+        
         # Button to show selected date and time
-        self.show_button = tk.Button(self.calendar, text="Submit Time",command=self.show_date_time)
-        self.show_button.grid(row=4, column=0, columnspan=2, pady=5)
+        self.show_button = tk.Button(self.calendar, text="Submit Time", command=self.show_date_time, font=("Helvetica", 14))
+        self.show_button.grid(row=3, column=0, columnspan=2, pady=(10, 20))
+        
+        # Frame for time selection
+        self.time_frame = tk.Frame(self.calendar)
+        self.time_frame.grid(row=2, column=0, columnspan=2, pady=20)
+        
+        # Time Label
+        self.time_label = tk.Label(self.time_frame, text="Select Time:", font=("Helvetica", 14))
+        self.time_label.grid(row=0, column=0, columnspan=6)
+        
+        # Hour Spinbox (1 to 12)
+        self.hour_label = tk.Label(self.time_frame, text="Hour:", font=("Helvetica", 14))
+        self.hour_label.grid(row=1, column=0)
+        self.hour_spinbox = tk.Spinbox(self.time_frame, from_=1, to=12, width=5, font=("Helvetica", 14))
+        self.hour_spinbox.grid(row=1, column=1, padx=10)
+
+        # Minute Spinbox (0 to 59)
+        self.minute_label = tk.Label(self.time_frame, text="Minute:", font=("Helvetica", 14))
+        self.minute_label.grid(row=1, column=2)
+        self.minute_spinbox = tk.Spinbox(self.time_frame, from_=0, to=59, width=5, font=("Helvetica", 14))
+        self.minute_spinbox.grid(row=1, column=3, padx=10)
+        
+        # AM/PM Combobox
+        self.ampm_label = tk.Label(self.time_frame, text="AM/PM:", font=("Helvetica", 14))
+        self.ampm_label.grid(row=1, column=4)
+        self.ampm_combobox = ttk.Combobox(self.time_frame, values=["AM", "PM"], width=8, font=("Helvetica", 14))
+        self.ampm_combobox.grid(row=1, column=5, padx=10)
+        self.ampm_combobox.current(0)  # Default to AM
+ 
+
         
     def show_date_time(self):
+        # Get the selected date and time
         date = self.date_entry.get()
-        hour = self.hour_combobox.get()
-        minute = self.minute_combobox.get()
+        hour = self.hour_spinbox.get()  # Updated to use Spinbox
+        minute = self.minute_spinbox.get()  # Updated to use Spinbox
         ampm = self.ampm_combobox.get()
+        
+        # Ensure the minute is two digits
         if len(minute) == 1:
             minute = "0" + minute
+        
+        # Format the full date and time string
         self.full_time = f"{date} {hour}:{minute} {ampm}"
+        
+        # Close the calendar window
         self.calendar.destroy()
-        print(self.full_time)
+        
+        # Update the label with the due date
         self.duedate.config(text=self.full_time)
+        print(self.full_time)
+
         
         
     
