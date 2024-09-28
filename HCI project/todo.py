@@ -32,6 +32,9 @@ class App:
         log = tk.Label(frontFrame, image=img, bg="white")
         log.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
         log.image = img
+        
+        todotitle = tk.Label(frontFrame,text="To Do List Application",font=("Arial",25),bg="white")
+        todotitle.grid(row=0,column=1,padx=10,pady=10,sticky="nswe")
 
         # Create a frame for bell and exit icons (Right side, row 0)
         bell_exit_frame = tk.Frame(frontFrame, bg="white")
@@ -111,7 +114,7 @@ class App:
         a.grid(row=3, column=3, padx=10, pady=10)  # Adjusted to column 2
         a.image = ad
 
-        a.bind("<Button-1>", self.add_List)
+        a.bind("<Button-1>", self.open_task_window)
         self.load_tasks_from_file()
     
     def exit_program(self,event):
@@ -157,8 +160,62 @@ class App:
             title = task_info.get("title", "").lower()  # Convert title to lowercase
             if self.value_search in title:
                 self.listbox.insert(tk.END, task_info["title"]) 
+                
+    def open_task_window(self,event):
+        # Create a new Toplevel window
+        self.task_chooser =  tk.Toplevel()
+        self.task_chooser.title("Task Manager")
+        self.task_chooser.geometry("400x300")
+
+        # Create a label to prompt the user to choose a task category
+        self.label = tk.Label(self.task_chooser, text="Choose Task", font=("Arial", 20,"bold"))
+        self.label.pack(pady=10)
+        
+        self.Clabel = tk.Label(self.task_chooser, text="Categories", font=("Arial", 14))
+        self.Clabel.pack(pady=10)
+
+        # Create a Combobox for task categories
+        self.category_combo = ttk.Combobox(self.task_chooser, values=["Academic", "Personal"], font=("Arial", 12))
+        self.category_combo.pack(pady=10)
+        self.category_combo.bind("<<ComboboxSelected>>", self.on_category_selected)
+        
+        self.Slabel = tk.Label(self.task_chooser, text="Sub Categories", font=("Arial", 14))
+        self.Slabel.pack(pady=10)
+
+        # Create a Combobox for tasks (Initially empty, will populate based on category selection)
+        self.task_combo = ttk.Combobox(self.task_chooser, font=("Arial", 12))
+        self.task_combo.pack(pady=10)
+
+        # Add buttons for actions
+        self.add_task_button = tk.Button(self.task_chooser, text="Next", font=("Arial", 12), command=self.add_task)
+        self.add_task_button.pack(pady=10)
+
         
         
+    def on_category_selected(self, event):
+        # Get the selected category
+        category = self.category_combo.get()
+
+        # Define academic and personal tasks
+        academic_tasks = ["Submit Assignment", "Prepare for Exam", "Attend Class", "Group Project Meeting"]
+        personal_tasks = ["Grocery Shopping", "Pay Bills", "Clean the House", "Cook Dinner"]
+
+        # Populate the task combo based on selected category
+        if category == "Academic":
+            self.task_combo['values'] = academic_tasks
+        elif category == "Personal":
+            self.task_combo['values'] = personal_tasks
+
+        # Set the first task as default in the task combo box
+        self.task_combo.current(0)
+        
+    def add_task(self):
+        # Get the selected task from the task combo box
+        selected_task = self.task_combo.get()
+        if selected_task:
+            print(f"Task '{selected_task}' added to the list!")
+        else:
+            print("No task selected!")
                 
             
     def on_entry_clickSearch(self, event):
