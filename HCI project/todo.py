@@ -144,12 +144,30 @@ class App:
 
 
     def add_listbox(self):
-       # Clear the Listbox
+        # Clear the Listbox
         self.listbox.delete(0, tk.END)
         
-        # Loop through the alltask dictionary and add titles to the Listbox
-        for task_key, task_info in self.alltask.items():
-            self.listbox.insert(tk.END, task_info["category"])
+        # Check if 'personal' category exists and loop through personal tasks
+        if "personal" in self.alltask:
+            for task_key, task_info in self.alltask["personal"].items():
+                # Use the 'where' field as the title for personal tasks
+                task_title = task_info.get("where", "Untitled Personal Task")
+                print(f"Adding Personal Task: {task_title}")  # Debug print
+                self.listbox.insert(tk.END, f"Personal: {task_title}")
+        
+        # Check if 'academic' category exists and loop through academic tasks
+        if "academic" in self.alltask:
+            for task_key, task_info in self.alltask["academic"].items():
+                # Use the 'subject' field as the title for academic tasks
+                task_title = task_info.get("subject", "Untitled Academic Task")
+                print(f"Adding Academic Task: {task_title}")  # Debug print
+                self.listbox.insert(tk.END, f"Academic: {task_title}")
+
+        # Print a message if no tasks are found
+        if not self.listbox.size():
+            print("No tasks found to display.")
+
+
             
     def search(self):
         # Get the value from the search bar
@@ -190,8 +208,16 @@ class App:
         self.task_combo.pack(pady=10)
 
         # Add buttons for actions
-        self.add_task_button = tk.Button(self.task_chooser, text="Next", font=("Arial", 12), command=self.open_subcategory_window)
+        self.add_task_button = tk.Button(self.task_chooser, text="Next", font=("Arial", 12), command=self.identifier_task)
         self.add_task_button.pack(pady=10)
+    
+    def identifier_task(self):
+        category = self.category_combo.get()
+        if category == "Academic":
+            self.open_academic_task_window()
+        elif category == "Personal":
+            self.open_personal_task_window()
+        
 
         
         
@@ -201,7 +227,7 @@ class App:
 
         # Define academic and personal tasks
         academic_tasks = ["Submit Assignment", "Prepare for Exam", "Attend Class", "Group Project Meeting"]
-        personal_tasks = ["Grocery Shopping", "Pay Bills", "Clean the House", "Cook Dinner"]
+        personal_tasks = ["Grocery Shopping", "Pay Bills", "Clean", "Cook"]
 
         # Populate the task combo based on selected category
         if category == "Academic":
@@ -214,7 +240,7 @@ class App:
     
     
     
-    def open_subcategory_window(self):
+    def open_academic_task_window(self):
         self.subcategory_window = tk.Toplevel(self.root)
         self.subcategory_window.title("Task Subcategory")
 
@@ -250,7 +276,45 @@ class App:
             self.subcategory_window.grid_rowconfigure(i, weight=1)
         for j in range(2):
             self.subcategory_window.grid_columnconfigure(j, weight=1)
+    
+    def open_personal_task_window(self):
+        self.subcategory_window = tk.Toplevel(self.root)
+        self.subcategory_window.title("Personal Task")
 
+        # Set a larger size for the window
+        self.subcategory_window.geometry("400x300")
+
+        # Personal Task Selection (using a Combobox)
+        self.task_label = tk.Label(self.subcategory_window, text="Where:", font=('Arial', 12))
+        self.task_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+
+        self.where = tk.Entry(self.subcategory_window, font=('Arial', 12), width=30)
+        self.where.grid(row=0, column=1, padx=10, pady=10)
+
+        # Description Entry
+        self.description_label = tk.Label(self.subcategory_window, text="Description:", font=('Arial', 12))
+        self.description_label.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+        self.description_entry = tk.Text(self.subcategory_window, height=5, width=30, font=('Arial', 12))
+        self.description_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Due Date Label
+        self.due_date_label = tk.Label(self.subcategory_window, text="Due Date:", font=('Arial', 12))
+        self.due_date_label.grid(row=2, column=0, padx=10, pady=10, sticky='w')
+
+        # Due Date Button
+        self.due_date_button = tk.Button(self.subcategory_window, text="Select Due Date", command=self.showCalendar, font=('Arial', 12), width=20)
+        self.due_date_button.grid(row=2, column=1, padx=10, pady=10)
+
+        # Submit Button
+        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=self.submit_task, font=('Arial', 12), width=20)
+        self.submit_button.grid(row=3, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
+
+        # Make the layout more spacious
+        for i in range(4):
+            self.subcategory_window.grid_rowconfigure(i, weight=1)
+        for j in range(2):
+            self.subcategory_window.grid_columnconfigure(j, weight=1)
+            
 
         
     def add_task(self):
@@ -273,50 +337,76 @@ class App:
     
         
     def submit_task(self):
-        # Retrieve input values from the entry widgets
-        subject = self.subject_entry.get()
-        description = self.description_entry.get("1.0", tk.END).strip()
-        due_date = self.due_date_entry.get()
-        priority = self.priority_combobox.get()
-
-        # Create a task_info dictionary
-        task_info = {
-            "subject": subject,
-            "description": description,
-            "due_date": due_date,
-            "priority": priority
-        }
-
         # Load existing tasks or initialize an empty dictionary
+        sub = self.task_combo.get()
+        category = self.category_combo.get()
         filename = 'HCI project/task.json'
         if os.path.exists(filename):
-            with open(filename, 'r') as json_file:
-                all_tasks = json.load(json_file)
+                with open(filename, 'r') as json_file:
+                        all_tasks = json.load(json_file)
         else:
-            all_tasks = {}
+                all_tasks = {"Personal": {}, "Academic": {}}
 
-        # Create a unique task key for the new task
-        current_size_of_task_dict = len(all_tasks)
-        task_key = f"task{current_size_of_task_dict + 1}"
+        # Determine the correct category (assume self.category holds either 'personal' or 'academic')
+        
+        if category == "Personal":
+                # Get personal task entry data
+                where = self.where.get().strip()  # Get the entry from 'where' (use subcategory as task key)
+                description = self.description_entry.get("1.0", tk.END).strip()
+                due_date = self.full_time  # Assume full_time is set when selecting the date
 
-        # Add the new task to the all_tasks dictionary
-        all_tasks[task_key] = task_info
+                # Create task info for personal task
+                task_info = {
+                        "where": where,  # The 'where' field is now used as the task title
+                        "description": description,
+                        "due_date": due_date,
+                }
+
+                # Use the subcategory (where) as the task key, if it's not empty
+                task_key = sub if sub else f"personal{len(all_tasks.get('personal', {}))}"
+
+                # Add the new personal task to the all_tasks dictionary
+                all_tasks["Personal"][task_key] = task_info
+                
+                
+
+        elif category == "Academic":
+                # Get academic task entry data
+                subject = self.subject_entry.get().strip()  # Use subject as the task key
+                description = self.description_entry.get("1.0", tk.END).strip()
+                due_date = self.full_time  # Assume full_time is set when selecting the date
+
+                # Create task info for academic task
+                task_info = {
+                        "subject": subject,  # The 'subject' field is now used as the task title
+                        "description": description,
+                        "due_date": due_date,
+                }
+
+                # Use the subject as the task key, if it's not empty
+                task_key = sub if sub else f"academic{len(all_tasks.get('academic', {}))}"
+
+                # Add the new academic task to the all_tasks dictionary
+                all_tasks["academic"][task_key] = task_info
 
         # Save the updated all_tasks dictionary to the JSON file
         with open(filename, 'w') as json_file:
-            json.dump(all_tasks, json_file, indent=4)
+                json.dump(all_tasks, json_file, indent=4)
 
         # Print confirmation of the submitted task
-        print(f"Task Submitted: {task_info}")
+        print(f"Task Submitted: {task_info} in {category} category under key: {task_key}")
 
         # Clear the fields after submission
-        self.subject_entry.delete(0, tk.END)
-        self.description_entry.delete("1.0", tk.END)
-        self.priority_combobox.current(1)  # Reset to "Medium"
-        self.due_date_entry.set_date('')  # Clear the date entry
+
+        
+
 
         
     def display_selected_task(self, event):
+        # Ensure something is selected
+        if not self.listbox.curselection():
+            return  # Exit the function if nothing is selected
+
         # Create a new Toplevel window to show task details
         details_window = tk.Toplevel()
         details_window.geometry("700x400")
@@ -326,25 +416,50 @@ class App:
         title_label = tk.Label(details_window, text="Task Details", font=("Arial", 20), bg="#518D45", fg="white")
         title_label.pack(pady=20)
 
-        selected_index = self.listbox.curselection()
-        index = selected_index[0]
-        task = "task" + str(index + 1)
+        # Get the selected index from the listbox
+        selected_index = self.listbox.curselection()[0]  # Get the index of the selected task
 
-        # Display other task information as labels
-        for key, value in self.alltask[task].items():
-            if key != "context":  # Exclude the context from being displayed as a label
+        # Retrieve the task key (e.g., "Personal: Cook" or "Academic: Submit Assignment")
+        selected_task_text = self.listbox.get(selected_index)
+
+        # Check whether the selected task belongs to the personal or academic category
+        if selected_task_text.startswith("Personal:"):
+            category = "personal"
+            task_title = selected_task_text.replace("Personal: ", "")  # Extract task title
+        elif selected_task_text.startswith("Academic:"):
+            category = "academic"
+            task_title = selected_task_text.replace("Academic: ", "")  # Extract task title
+        else:
+            return  # Do nothing if no valid task is selected
+
+        # Find the task details using the task title (where/subject)
+        task_info = None
+        for key, task in self.alltask[category].items():
+            if (category == "personal" and task.get("where") == task_title) or (category == "academic" and task.get("subject") == task_title):
+                task_info = task
+                break
+        
+        if not task_info:
+            return  # Exit if task not found
+        
+        # Display task details as labels
+        for key, value in task_info.items():
+            if key != "context":  # Exclude 'context' from being displayed as a label
                 tk.Label(details_window, text=f"{key.capitalize()}: {value}", font=("Arial", 15), bg="#518D45", fg="white").pack(pady=5)
 
         # Create a Text widget to display the task context
-        task_info_text = tk.Text(details_window, wrap="word", font=("Arial", 15), bg="#ffffff", fg="#518D45", height=10)
-        task_info_text.pack(padx=20, pady=10, fill=tk.BOTH, expand=True)
+        if "context" in task_info:
+            task_info_text = tk.Text(details_window, wrap="word", font=("Arial", 15), bg="#ffffff", fg="#518D45", height=10)
+            task_info_text.pack(padx=20, pady=10, fill=tk.BOTH, expand=True)
 
-        # Insert task context into the Text widget
-        task_info_text.insert(tk.END, self.alltask[task]["context"])
+            # Insert task context into the Text widget
+            task_info_text.insert(tk.END, task_info["context"])
+            task_info_text.config(state=tk.DISABLED)  # Make it read-only
+
 
   
        
-    def showCalendar(self,event):
+    def showCalendar(self):
         self.calendar = tk.Toplevel()
         
         # Date selection
@@ -404,7 +519,7 @@ class App:
         self.calendar.destroy()
         
         # Update the label with the due date
-        self.duedate.config(text=self.full_time)
+        self.due_date_button.config(text=self.full_time)
         print(self.full_time)
 
         

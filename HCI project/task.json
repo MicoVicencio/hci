@@ -1,3 +1,10 @@
 {
-
+    "Personal": {
+        "Grocery Shopping": {
+            "where": "efw",
+            "description": "erwer",
+            "due_date": "9/29/24 1:00 AM"
+        }
+    },
+    "Academic": {}
 }
