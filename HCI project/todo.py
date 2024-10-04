@@ -5,6 +5,7 @@ from tkcalendar import DateEntry
 import json
 import sys
 import os
+from tkinter import  messagebox
 
 
 class App:
@@ -12,113 +13,208 @@ class App:
         self.root = root
         self.root.geometry("1230x600")
         self.alltask = {}
-        self.root.title("To do List")
-        
+        self.root.title("To Do List")
+
         # Create the main frame
         frontFrame = tk.Frame(self.root, width=1100, height=500, bg="white")
         frontFrame.pack_propagate(False)  # Prevent the frame from resizing to fit its contents
         frontFrame.pack(padx=10, pady=10)
 
-        # Configure the grid to manage layout properly
-        frontFrame.grid_columnconfigure(0, weight=1)  # Left side (logo column)
-        frontFrame.grid_columnconfigure(1, weight=3)  # Middle section
-        frontFrame.grid_columnconfigure(2, weight=1)  # For Add button
-        frontFrame.grid_columnconfigure(3, weight=1)  # Right side (bell/exit)
-        frontFrame.grid_rowconfigure(2, weight=1)  # Result frame row
+        # Configure the grid for the main frame
+        frontFrame.grid_columnconfigure(0, weight=1)  # Left column (logo)
+        frontFrame.grid_columnconfigure(1, weight=3)  # Middle section (title, search, result)
+        frontFrame.grid_columnconfigure(2, weight=1)  # Right column (bell, history, add button)
+        frontFrame.grid_rowconfigure(2, weight=1)     # Ensure the row for the button has space
 
         # Load and resize the logo image
         logo = Image.open("HCI project/logo.png")
         logo = logo.resize((190, 130), Image.LANCZOS)
         img = ImageTk.PhotoImage(logo)
 
-        # Create and place the logo label in the grid (Left side, row 0)
+        # Create and place the logo label (row 0, column 0)
         log = tk.Label(frontFrame, image=img, bg="white")
         log.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
         log.image = img
         
-        todotitle = tk.Label(frontFrame,text="To Do List Application",font=("Arial",25),bg="white")
-        todotitle.grid(row=0,column=1,padx=10,pady=10,sticky="nswe")
+        # Title label for the app (row 0, column 1)
+        todotitle = tk.Label(frontFrame, text="To Do List Application", font=("Times", 35), bg="white",fg="#518D45")
+        todotitle.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
 
-        # Create a frame for bell and exit icons (Right side, row 0)
-        bell_exit_frame = tk.Frame(frontFrame, bg="white")
-        bell_exit_frame.grid(row=0, column=3, padx=10, pady=10, sticky="ne")  # Changed to column 3
+        # Frame for bell and history icons (row 0, column 2)
+        bell_history_frame = tk.Frame(frontFrame, bg="white")
+        bell_history_frame.grid(row=0, column=2, padx=10, pady=10, sticky="ne")
 
         # Load and resize the bell image
         bell = Image.open("HCI project/bell.png")
         bell = bell.resize((70, 60), Image.LANCZOS)
         bel = ImageTk.PhotoImage(bell)
 
-        # Create and place the bell label in the bell_exit_frame
-        be = tk.Label(bell_exit_frame, image=bel, bg="white")
+        # Place the bell label
+        be = tk.Label(bell_history_frame, image=bel, bg="white")
         be.pack(side="left", padx=5)
         be.image = bel
 
-        # Load and resize the exit image
-        exit_img = Image.open("HCI project/exit.png")  # Changed variable name to avoid conflict
-        exit_img = exit_img.resize((70, 60), Image.LANCZOS)
-        exi = ImageTk.PhotoImage(exit_img)
+        # Load and resize the history image
+        history_img = Image.open("HCI project/history.png")
+        history_img = history_img.resize((70, 60), Image.LANCZOS)
+        hist_img = ImageTk.PhotoImage(history_img)
 
-        # Create and place the exit label in the bell_exit_frame
-        ex = tk.Label(bell_exit_frame, image=exi, bg="white")
-        ex.pack(side="left", padx=5)
-        ex.image = exi
-        ex.bind("<Button-1>", self.exit_program)
+        # Place the history label
+        history_button = tk.Label(bell_history_frame, image=hist_img, bg="white")
+        history_button.pack(side="left", padx=5)
+        history_button.image = hist_img
+        history_button.bind("<Button-1>", self.open_history_window)
 
         # Load and resize the search image
         search = Image.open("HCI project/search.png")
-        search = search.resize((40, 40), Image.LANCZOS)  # Reduced size for better alignment
+        search = search.resize((40, 40), Image.LANCZOS)
         searc = ImageTk.PhotoImage(search)
 
-        # Create a small frame to hold both search logo and search bar for closer alignment
+        # Create frame for search bar and icon (row 1, column 0 & 1)
         searchFrame = tk.Frame(frontFrame, bg="white")
         searchFrame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="w")
 
-        # Place the search icon in the searchFrame
+        # Place the search icon
         sear = tk.Label(searchFrame, image=searc, bg="white")
-        sear.pack(side="left", padx=5)  # Small padding to keep it close to the search bar
+        sear.pack(side="left", padx=5)
         sear.image = searc
 
-        # Create and place the search bar in the searchFrame
+        # Create the search bar
         self.searchbar_placeholder = "Search Task"
         self.searchBar = tk.Entry(searchFrame, width=50, font=("Arial", 13))
         self.searchBar.insert(0, self.searchbar_placeholder)
         self.searchBar.bind('<FocusIn>', self.on_entry_clickSearch)
         self.searchBar.bind('<FocusOut>', self.on_focusoutSearch)
-        self.searchBar.pack(side="left", padx=5, ipady=10)  # Keep the entry close to the icon
+        self.searchBar.pack(side="left", padx=5, ipady=10)
 
-        # Create result frame for displaying results
+        # Create result frame (row 2, column 0-3)
         self.resultFrame = tk.Frame(frontFrame, width=1000, height=300, bg="grey", borderwidth=2, relief="solid")
-        self.resultFrame.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+        self.resultFrame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
         self.resultFrame.grid_propagate(False)
 
-        # Create a scrollbar for the listbox
+        # Scrollbar for the listbox
         scrollbar = tk.Scrollbar(self.resultFrame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.title = tk.Label(self.resultFrame, text="Tasks:", font=("Arial", 15))
         self.title.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.searchBar.bind("<Return>", self.search_on_enter)
 
-        # Create the Listbox widget inside the resultFrame
-        self.listbox = tk.Listbox(self.resultFrame, yscrollcommand=scrollbar.set, width=1000, height=300, font=("Arial", 15))
+        # Create the Listbox widget
+        self.listbox = tk.Listbox(self.resultFrame, yscrollcommand=scrollbar.set, width=1000, height=300, font=("Arial", 20))
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
         self.listbox.bind("<<ListboxSelect>>", self.display_selected_task)
-
-        # Configure the scrollbar to work with the Listbox
         scrollbar.config(command=self.listbox.yview)
 
         # Load and resize the add image
         add = Image.open("HCI project/add.png")
-        add = add.resize((70, 60), Image.LANCZOS)
+        add = add.resize((60, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add)
 
-        # Create and place the add label in the grid
-        a = tk.Label(frontFrame, image=ad, bg="white")
-        a.grid(row=3, column=3, padx=10, pady=10)  # Adjusted to column 2
-        a.image = ad
+        # Add Button (row 2, column 2)
+        add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.open_task_window)
+        add_button.grid(row=3, column=2, padx=10, pady=10, sticky="nsew")
+        add_button.image = ad  # Save reference to prevent garbage collection
+        self.add_listbox()
+        
+        
+        
 
-        a.bind("<Button-1>", self.open_task_window)
-        self.load_tasks_from_file()
+    def open_history_window(self, event):
+        # Create a top-level window for the history
+        history_window = tk.Toplevel(self.root)
+        history_window.title("Task History")
+        history_window.geometry("600x400")
+        
+        # Create a frame to hold the Listbox and Scrollbars
+        frame = tk.Frame(history_window)
+        frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+        # Create a Listbox for the history
+        self.history_listbox = tk.Listbox(frame, font=("Arial", 15), width=70)
+        self.history_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Create vertical scrollbar
+        vertical_scrollbar = tk.Scrollbar(frame, orient=tk.VERTICAL, command=self.history_listbox.yview)
+        vertical_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Link the scrollbar to the Listbox
+        self.history_listbox.config(yscrollcommand=vertical_scrollbar.set)
+
+        # Create horizontal scrollbar
+        horizontal_scrollbar = tk.Scrollbar(history_window, orient=tk.HORIZONTAL, command=self.history_listbox.xview)
+        horizontal_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Link the horizontal scrollbar to the Listbox
+        self.history_listbox.config(xscrollcommand=horizontal_scrollbar.set)
+
+        # Create a Delete button
+        delete_button = tk.Button(history_window, text="Delete Task", command=self.delete_task_from_history, font=("Arial", 12))
+        delete_button.pack(pady=10)
+
+        # Load history from JSON
+        self.load_history()
+
+    def load_history(self):
+      if os.path.exists('HCI project/archives.json'):
+        with open('HCI project/archives.json', 'r') as file:
+            history = json.load(file)
+            
+            # Iterate over each category and task
+            for category, tasks in history.items():
+                # Insert the category as a header
+                self.history_listbox.insert(tk.END, f"{category}:")
+                self.history_listbox.itemconfig(tk.END, {'fg': 'blue'})  # Optional: Make category stand out
+
+                for task_name, details in tasks.items():
+                    # Format the task details with an 8-space indent
+                    where = details.get("where", "N/A")
+                    description = details.get("description", "N/A")
+                    due_date = details.get("Due Date", "N/A")
+                    
+                    task_info = f"        {task_name} - Where: {where}, Description: {description}, Due Date: {due_date}"
+                    self.history_listbox.insert(tk.END, task_info)
+
+    def delete_task_from_history(self):
+        selected_task_index = self.history_listbox.curselection()
+        if selected_task_index:
+            # Get the selected task name from the Listbox, stripping unnecessary details
+            task_info = self.history_listbox.get(selected_task_index).strip()
+            # Assume the task name is the first part of the string, before the ' - ' separator
+            task_to_delete = task_info.split(' - ')[0]  # Extracting just the task name
+            print(f"Attempting to delete task: '{task_to_delete}'")
+            
+            self.history_listbox.delete(selected_task_index)
+
+            # Load existing archives from archives.json
+            try:
+                with open('HCI project/archives.json', 'r') as file:
+                    archives = json.load(file)
+            except FileNotFoundError:
+                messagebox.showerror("Error", "Archives file not found.")
+                return
+
+            # Check if the task exists in archives
+            archive_task_found = False
+            for category, tasks in archives.items():
+                print(f"Checking category: {category} with tasks: {tasks}")  # Debugging output
+                # Use the key name to compare with the extracted task name
+                if task_to_delete in tasks:
+                    del tasks[task_to_delete]  # Delete the task from the archives category
+                    archive_task_found = True
+                    print(f"Deleted task '{task_to_delete}' from archives.")  # Debugging output
+                    break
+
+            if archive_task_found:
+                # Save the updated archives back to archives.json
+                with open('HCI project/archives.json', 'w') as file:
+                    json.dump(archives, file, indent=4)
+                messagebox.showinfo("Task Deleted", f"The task '{task_to_delete}' has been deleted from archives.")
+            else:
+                messagebox.showwarning("Error", "Task not found in archives.")
+        else:
+            messagebox.showwarning("Error", "No task selected for deletion.")
+
+
+
     
     def exit_program(self,event):
         self.root.destroy()
@@ -127,7 +223,10 @@ class App:
     def search_on_enter(self, event):
         self.search()  # Call the search method
         
-    def load_tasks_from_file(self):
+    
+
+
+    def add_listbox(self):
         try:
             # Open the JSON file and load the data
             with open('HCI project/task.json', 'r') as json_file:
@@ -140,49 +239,66 @@ class App:
         except Exception as e:
             print("An error occurred:", str(e))
             
-        self.add_listbox()
-
-
-    def add_listbox(self):
         # Clear the Listbox
         self.listbox.delete(0, tk.END)
         
-        # Check if 'personal' category exists and loop through personal tasks
-        if "personal" in self.alltask:
-            for task_key, task_info in self.alltask["personal"].items():
-                # Use the 'where' field as the title for personal tasks
-                task_title = task_info.get("where", "Untitled Personal Task")
-                print(f"Adding Personal Task: {task_title}")  # Debug print
-                self.listbox.insert(tk.END, f"Personal: {task_title}")
+        # Check if 'Personal' category exists and loop through personal tasks
+        if "Personal" in self.alltask:
+                for task_key, task_info in self.alltask["Personal"].items():
+                        # Display the subcategory (task_key) directly in the listbox
+                        task_title = task_key
+                        print(f"Adding Personal Task: {task_title}")  # Debug print
+                        self.listbox.insert(tk.END, f"Personal: {task_title}")
         
-        # Check if 'academic' category exists and loop through academic tasks
-        if "academic" in self.alltask:
-            for task_key, task_info in self.alltask["academic"].items():
-                # Use the 'subject' field as the title for academic tasks
-                task_title = task_info.get("subject", "Untitled Academic Task")
-                print(f"Adding Academic Task: {task_title}")  # Debug print
-                self.listbox.insert(tk.END, f"Academic: {task_title}")
+        # Check if 'Academic' category exists and loop through academic tasks
+        if "Academic" in self.alltask:
+                for task_key, task_info in self.alltask["Academic"].items():
+                        # Use the 'subject' field as the task title, fall back to default if not available
+                        task_title = task_key
+                        print(f"Adding Academic Task: {task_title}")  # Debug print
+                        self.listbox.insert(tk.END, f"Academic: {task_title}")
 
         # Print a message if no tasks are found
         if not self.listbox.size():
-            print("No tasks found to display.")
+                print("No tasks found to display.")
+
 
 
             
     def search(self):
         # Get the value from the search bar
         self.value_search = self.searchBar.get().lower()  # Convert input to lowercase for case-insensitive search
-    
-    # Clear the Listbox before adding new results
+        
+        # Clear the Listbox before adding new results
         self.listbox.delete(0, tk.END)
-    
-    # Iterate through all tasks and search for titles that match
-        for task_key, task_info in self.alltask.items():
-            title = task_info.get("title", "").lower()  # Convert title to lowercase
-            if self.value_search in title:
-                self.listbox.insert(tk.END, task_info["title"]) 
+        
+        # Check if the search term is for a specific category
+        if self.value_search in ["personal", "academic"]:  # Checking for category terms
+                category = self.value_search.capitalize()  # Capitalize to match JSON keys
+                tasks = self.alltask.get(category, {})  # Get tasks from the specified category
                 
-    def open_task_window(self,event):
+                # Insert all task keys from the selected category into the listbox
+                for task_key in tasks.keys():
+                    self.listbox.insert(tk.END, task_key)  # Insert task key into the listbox
+        else:
+                # Get the Personal tasks
+                personal_tasks = self.alltask.get("Personal", {})  # Get the Personal tasks
+                
+                # Iterate through all personal tasks and search for keys that match
+                for task_key in personal_tasks.keys():
+                    if self.value_search in task_key.lower():  # Check if the search value is in the task key
+                        self.listbox.insert(tk.END, task_key)  # Insert matching task key into the listbox
+                
+                # Get the Academic tasks
+                academic_tasks = self.alltask.get("Academic", {})  # Get the Academic tasks
+                
+                # Iterate through all academic tasks and search for keys that match
+                for task_key in academic_tasks.keys():
+                    if self.value_search in task_key.lower():  # Check if the search value is in the task key
+                        self.listbox.insert(tk.END, task_key)  # Insert matching task key into the listbox
+
+                
+    def open_task_window(self):
         # Create a new Toplevel window
         self.task_chooser =  tk.Toplevel()
         self.task_chooser.title("Task Manager")
@@ -337,18 +453,27 @@ class App:
     
         
     def submit_task(self):
-        # Load existing tasks or initialize an empty dictionary
         sub = self.task_combo.get()
         category = self.category_combo.get()
+
+        # File name for storing tasks
         filename = 'HCI project/task.json'
+        
+        # Load existing tasks or initialize an empty dictionary
         if os.path.exists(filename):
                 with open(filename, 'r') as json_file:
                         all_tasks = json.load(json_file)
         else:
-                all_tasks = {"Personal": {}, "Academic": {}}
+                all_tasks = {"Personal": {}, "Academic": {}}  # Ensure these keys match consistently
 
-        # Determine the correct category (assume self.category holds either 'personal' or 'academic')
-        
+        # Count existing tasks with the same prefix in the selected category
+        chosen = all_tasks.get(category, {})
+        number = sum(1 for key in chosen.keys() if key.startswith(sub))
+
+        # Create a unique subname for the new task
+        subname = f"{sub}{number}" if number > 0 else sub
+
+        # Determine the correct category and handle both personal and academic tasks
         if category == "Personal":
                 # Get personal task entry data
                 where = self.where.get().strip()  # Get the entry from 'where' (use subcategory as task key)
@@ -357,18 +482,13 @@ class App:
 
                 # Create task info for personal task
                 task_info = {
-                        "where": where,  # The 'where' field is now used as the task title
+                        "where": where,
                         "description": description,
-                        "due_date": due_date,
+                        "Due Date": due_date,
                 }
 
-                # Use the subcategory (where) as the task key, if it's not empty
-                task_key = sub if sub else f"personal{len(all_tasks.get('personal', {}))}"
-
                 # Add the new personal task to the all_tasks dictionary
-                all_tasks["Personal"][task_key] = task_info
-                
-                
+                all_tasks["Personal"][subname] = task_info
 
         elif category == "Academic":
                 # Get academic task entry data
@@ -378,83 +498,147 @@ class App:
 
                 # Create task info for academic task
                 task_info = {
-                        "subject": subject,  # The 'subject' field is now used as the task title
+                        "subject": subject,
                         "description": description,
-                        "due_date": due_date,
+                        "Due Date": due_date,
                 }
 
-                # Use the subject as the task key, if it's not empty
-                task_key = sub if sub else f"academic{len(all_tasks.get('academic', {}))}"
-
                 # Add the new academic task to the all_tasks dictionary
-                all_tasks["academic"][task_key] = task_info
+                all_tasks["Academic"][subname] = task_info
 
         # Save the updated all_tasks dictionary to the JSON file
         with open(filename, 'w') as json_file:
                 json.dump(all_tasks, json_file, indent=4)
 
         # Print confirmation of the submitted task
-        print(f"Task Submitted: {task_info} in {category} category under key: {task_key}")
-
-        # Clear the fields after submission
-
-        
-
+        print(f"Task Submitted: {task_info} in {category} category under key: {subname}")
+        self.subcategory_window.destroy()
+        self.task_chooser.destroy()
+        self.add_listbox()
 
         
     def display_selected_task(self, event):
         # Ensure something is selected
         if not self.listbox.curselection():
-            return  # Exit the function if nothing is selected
+            return  # Exit if nothing is selected
 
         # Create a new Toplevel window to show task details
         details_window = tk.Toplevel()
-        details_window.geometry("700x400")
-        details_window.config(bg="#518D45")
+        details_window.geometry("800x600")  # Ensure the window is large enough
 
-        # Title label
-        title_label = tk.Label(details_window, text="Task Details", font=("Arial", 20), bg="#518D45", fg="white")
-        title_label.pack(pady=20)
+        # Title label directly in the details_window
+        title_label = tk.Label(details_window, text="Task Details", font=("Times", 30, "bold"), pady=20, fg="#518D45")
+        title_label.pack()
 
         # Get the selected index from the listbox
         selected_index = self.listbox.curselection()[0]  # Get the index of the selected task
 
-        # Retrieve the task key (e.g., "Personal: Cook" or "Academic: Submit Assignment")
+        # Retrieve the task key
         selected_task_text = self.listbox.get(selected_index)
 
         # Check whether the selected task belongs to the personal or academic category
         if selected_task_text.startswith("Personal:"):
-            category = "personal"
+            category = "Personal"
             task_title = selected_task_text.replace("Personal: ", "")  # Extract task title
         elif selected_task_text.startswith("Academic:"):
-            category = "academic"
+            category = "Academic"
             task_title = selected_task_text.replace("Academic: ", "")  # Extract task title
         else:
             return  # Do nothing if no valid task is selected
 
-        # Find the task details using the task title (where/subject)
+        # Display Category Label
+        category_label = tk.Label(details_window, text=f"Category: {category}", font=("Arial", 20), pady=10, fg="#518D45")
+        category_label.pack()
+
+        # Display Subcategory Label (Task Title)
+        task_label = tk.Label(details_window, text=f"Task: {task_title}", font=("Arial", 20), pady=10, fg="#518D45")
+        task_label.pack()
+
+        # Find the task details using the task title
         task_info = None
-        for key, task in self.alltask[category].items():
-            if (category == "personal" and task.get("where") == task_title) or (category == "academic" and task.get("subject") == task_title):
-                task_info = task
-                break
-        
+        if category in self.alltask and task_title in self.alltask[category]:
+            task_info = self.alltask[category][task_title]
+
         if not task_info:
             return  # Exit if task not found
-        
+
         # Display task details as labels
         for key, value in task_info.items():
-            if key != "context":  # Exclude 'context' from being displayed as a label
-                tk.Label(details_window, text=f"{key.capitalize()}: {value}", font=("Arial", 15), bg="#518D45", fg="white").pack(pady=5)
+            if key == "description":
+                description_text = tk.Text(details_window, font=("Arial", 18), fg="#518D45", height=5, width=50)
+                description_text.insert(tk.END, value)  # Insert the description into the Text widget
+                description_text.pack(pady=10)
+                description_text.config(state=tk.DISABLED)  # Make it read-only
+            else:
+                tk.Label(details_window, text=f"{key.capitalize()}: {value}", font=("Arial", 18), fg="#518D45").pack(pady=10)
 
-        # Create a Text widget to display the task context
+        # Create a Text widget to display the task context if it exists
         if "context" in task_info:
-            task_info_text = tk.Text(details_window, wrap="word", font=("Arial", 15), bg="#ffffff", fg="#518D45", height=10)
-            task_info_text.pack(padx=20, pady=10, fill=tk.BOTH, expand=True)
+            context_text = tk.Text(details_window, font=("Arial", 18), fg="#518D45", height=10, width=80)
+            context_text.pack(padx=10, pady=10)
 
             # Insert task context into the Text widget
-            task_info_text.insert(tk.END, task_info["context"])
-            task_info_text.config(state=tk.DISABLED)  # Make it read-only
+            context_text.insert(tk.END, task_info["context"])
+            context_text.config(state=tk.DISABLED)  # Make it read-only
+
+        # Create the "Mark as Done" button
+        mark_done_frame = tk.Frame(details_window)
+        mark_done_frame.pack(pady=10, anchor="center")  # Pack the frame and center it
+
+        # Mark as Done button
+        mark_done_button = tk.Button(mark_done_frame, text="Mark as Done", font=("Arial", 16), command=lambda: self.archive_task(category, task_title),fg="#518D45")
+        mark_done_button.pack(side="left", padx=10)  # Pack the button to the left with padding
+
+        # Load and resize the delete image
+        delete_image = Image.open("HCI project/delete.png")  # Update with the correct path
+        delete_image = delete_image.resize((50, 50), Image.LANCZOS)
+        delete_photo = ImageTk.PhotoImage(delete_image)
+
+        # Create a label to display the delete image
+        delete_label = tk.Label(mark_done_frame, image=delete_photo)
+        delete_label.image = delete_photo  # Keep a reference to the image
+        delete_label.pack(side="left", padx=10)  # Pack the label to the left with padding
+
+
+        # Bind the delete image click to the delete_task method
+        delete_label.bind("<Button-1>", lambda e: self.delete_task(category, task_title))
+
+    def delete_task(self, category, task_title):
+        # Load existing tasks from task.json
+        with open('HCI project/task.json', 'r') as file:
+            tasks = json.load(file)
+
+        # Remove the task from the tasks dictionary
+        if category in tasks and task_title in tasks[category]:
+            task_info = tasks[category][task_title]  # Store task info before deletion
+            del tasks[category][task_title]  # Delete the task
+
+            # Write the updated tasks back to task.json
+            with open('HCI project/task.json', 'w') as file:
+                json.dump(tasks, file, indent=4)
+
+            # Archive the deleted task to archives.json
+            self.archive_task(category, task_title, task_info)
+
+            # Update the listbox
+            self.add_listbox()
+
+    def archive_task(self, category, task_title, task_info):
+        # Load existing archives from archives.json
+        try:
+            with open('HCI project/archives.json', 'r') as file:
+                archives = json.load(file)
+        except FileNotFoundError:
+            archives = {}
+
+        # Ensure the category exists in archives
+        if category not in archives:
+            archives[category] = {}
+        archives[category][task_title] = task_info  # Add the task info to the archives
+
+        # Write the updated archives back to archives.json
+        with open('HCI project/archives.json', 'w') as file:
+            json.dump(archives, file, indent=4)
 
 
   
