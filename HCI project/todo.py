@@ -6,115 +6,140 @@ import json
 import sys
 import os
 from tkinter import  messagebox
+from datetime import datetime, timedelta
 
 
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.geometry("1230x600")
+        self.root.geometry("1430x800")
+        
         self.alltask = {}
         self.root.title("To Do List")
+        self.data = {}
+        self.load_tasks()
 
         # Create the main frame
-        frontFrame = tk.Frame(self.root, width=1100, height=500, bg="white")
-        frontFrame.pack_propagate(False)  # Prevent the frame from resizing to fit its contents
-        frontFrame.pack(padx=10, pady=10)
+        frontFrame = tk.Frame(self.root, bg="white")
+        frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Configure the grid for the main frame
-        frontFrame.grid_columnconfigure(0, weight=1)  # Left column (logo)
-        frontFrame.grid_columnconfigure(1, weight=3)  # Middle section (title, search, result)
-        frontFrame.grid_columnconfigure(2, weight=1)  # Right column (bell, history, add button)
-        frontFrame.grid_rowconfigure(2, weight=1)     # Ensure the row for the button has space
+        # Configure grid for the main frame
+        frontFrame.grid_columnconfigure(0, weight=1)  # For logo
+        frontFrame.grid_columnconfigure(1, weight=3)  # For title
+        frontFrame.grid_columnconfigure(2, weight=1)  # For bell and history icons
+        frontFrame.grid_rowconfigure(0, weight=0)  # For title and logo
+        frontFrame.grid_rowconfigure(1, weight=0)  # For search bar
+        frontFrame.grid_rowconfigure(2, weight=1)  # For resultFrame (expandable)
+        frontFrame.grid_rowconfigure(3, weight=0)  # For add button
 
         # Load and resize the logo image
         logo = Image.open("HCI project/logo.png")
         logo = logo.resize((190, 130), Image.LANCZOS)
         img = ImageTk.PhotoImage(logo)
 
-        # Create and place the logo label (row 0, column 0)
+        # Create and place the logo label
         log = tk.Label(frontFrame, image=img, bg="white")
         log.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
         log.image = img
-        
-        # Title label for the app (row 0, column 1)
-        todotitle = tk.Label(frontFrame, text="To Do List Application", font=("Times", 35), bg="white",fg="#518D45")
+
+        # Title label for the app
+        todotitle = tk.Label(frontFrame, text="To Do List Application", font=("Times", 50), bg="white", fg="#DE6FA1")
         todotitle.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
 
-        # Frame for bell and history icons (row 0, column 2)
+        # Frame for bell and history icons
         bell_history_frame = tk.Frame(frontFrame, bg="white")
         bell_history_frame.grid(row=0, column=2, padx=10, pady=10, sticky="ne")
 
-        # Load and resize the bell image
-        bell = Image.open("HCI project/bell.png")
-        bell = bell.resize((70, 60), Image.LANCZOS)
+        # Load and place bell and history images
+        bell = Image.open("HCI project/bell.png").resize((70, 60), Image.LANCZOS)
         bel = ImageTk.PhotoImage(bell)
-
-        # Place the bell label
         be = tk.Label(bell_history_frame, image=bel, bg="white")
         be.pack(side="left", padx=5)
         be.image = bel
+        be.bind("<Button-1>", self.show_sorter)
 
-        # Load and resize the history image
-        history_img = Image.open("HCI project/history.png")
-        history_img = history_img.resize((70, 60), Image.LANCZOS)
+        history_img = Image.open("HCI project/history.png").resize((70, 60), Image.LANCZOS)
         hist_img = ImageTk.PhotoImage(history_img)
-
-        # Place the history label
         history_button = tk.Label(bell_history_frame, image=hist_img, bg="white")
         history_button.pack(side="left", padx=5)
         history_button.image = hist_img
         history_button.bind("<Button-1>", self.open_history_window)
 
-        # Load and resize the search image
-        search = Image.open("HCI project/search.png")
-        search = search.resize((40, 40), Image.LANCZOS)
-        searc = ImageTk.PhotoImage(search)
-
-        # Create frame for search bar and icon (row 1, column 0 & 1)
+        # Create frame for search bar and icon
         searchFrame = tk.Frame(frontFrame, bg="white")
         searchFrame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="w")
 
-        # Place the search icon
+        search = Image.open("HCI project/search.png").resize((40, 40), Image.LANCZOS)
+        searc = ImageTk.PhotoImage(search)
         sear = tk.Label(searchFrame, image=searc, bg="white")
         sear.pack(side="left", padx=5)
         sear.image = searc
 
-        # Create the search bar
         self.searchbar_placeholder = "Search Task"
-        self.searchBar = tk.Entry(searchFrame, width=50, font=("Arial", 13))
+        self.searchBar = tk.Entry(searchFrame, width=50, font=("Arial", 20))
         self.searchBar.insert(0, self.searchbar_placeholder)
         self.searchBar.bind('<FocusIn>', self.on_entry_clickSearch)
         self.searchBar.bind('<FocusOut>', self.on_focusoutSearch)
         self.searchBar.pack(side="left", padx=5, ipady=10)
 
-        # Create result frame (row 2, column 0-3)
-        self.resultFrame = tk.Frame(frontFrame, width=1000, height=300, bg="grey", borderwidth=2, relief="solid")
+        # Create result frame
+        self.resultFrame = tk.Frame(frontFrame, bg="grey", borderwidth=2, relief="solid")
         self.resultFrame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
-        self.resultFrame.grid_propagate(False)
+        self.resultFrame.grid_rowconfigure(0, weight=1)  # Make the inner frame expandable
+        self.resultFrame.grid_columnconfigure(0, weight=1)
 
-        # Scrollbar for the listbox
+        # Scrollbar for Treeview
         scrollbar = tk.Scrollbar(self.resultFrame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.title = tk.Label(self.resultFrame, text="Tasks:", font=("Arial", 15))
-        self.title.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Create the Listbox widget
-        self.listbox = tk.Listbox(self.resultFrame, yscrollcommand=scrollbar.set, width=1000, height=300, font=("Arial", 20))
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.listbox.bind("<<ListboxSelect>>", self.display_selected_task)
-        scrollbar.config(command=self.listbox.yview)
+        # Create the Treeview widget with larger text
+        style = ttk.Style()
+        style.configure("Custom.Treeview", font=("Helvetica", 12))  # Set font size
+        style.configure("Custom.Treeview.Heading", font=("Helvetica", 17, "bold"))  # Set heading font size
 
-        # Load and resize the add image
-        add = Image.open("HCI project/add.png")
-        add = add.resize((60, 60), Image.LANCZOS)
+                # Create the Treeview widget
+        self.tree = ttk.Treeview(self.resultFrame, columns=("Task", "Priority", "Status", "Due Date"), show='headings', height=10)
+        self.tree.heading("Task", text="Task")
+        self.tree.heading("Priority", text="Priority")
+        self.tree.heading("Status", text="Status")
+        self.tree.heading("Due Date", text="Due Date")  # Added Due Date column
+
+        # Configure the columns' width and alignment
+        self.tree.column("Task", width=400, anchor="center")
+        self.tree.column("Priority", width=200, anchor="center")
+        self.tree.column("Status", width=150, anchor="center")
+        self.tree.column("Due Date", width=150, anchor="center")  # Added Due Date column width
+
+        # Apply styles for the entire Treeview
+        style = ttk.Style()
+        style.configure("Treeview", rowheight=40)  # Set row height
+        style.configure("Treeview.Heading", font=("Arial", 16))  # Set heading font size
+        
+        style.configure("Custom.Treeview", font=("Helvetica", 12))  # Set font size for the entire Treeview
+        
+       
+
+        # Set the style to the Treeview
+        self.tree.configure(style="Custom.Treeview")
+
+        # Pack the Treeview into the frame
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Configure the scrollbar
+        scrollbar.config(command=self.tree.yview)
+        self.tree.config(yscrollcommand=scrollbar.set)
+
+        # Add Button
+        add = Image.open("HCI project/add.png").resize((60, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add)
-
-        # Add Button (row 2, column 2)
         add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.open_task_window)
         add_button.grid(row=3, column=2, padx=10, pady=10, sticky="nsew")
-        add_button.image = ad  # Save reference to prevent garbage collection
+        add_button.image = ad
+
+
+        # Insert some sample data
         self.add_listbox()
-        
+        self.tree.bind("<ButtonRelease-1>", self.display_selected_task)
         
         
 
@@ -162,15 +187,14 @@ class App:
             for category, tasks in history.items():
                 # Insert the category as a header
                 self.history_listbox.insert(tk.END, f"{category}:")
+                
                 self.history_listbox.itemconfig(tk.END, {'fg': 'blue'})  # Optional: Make category stand out
 
                 for task_name, details in tasks.items():
                     # Format the task details with an 8-space indent
-                    where = details.get("where", "N/A")
-                    description = details.get("description", "N/A")
                     due_date = details.get("Due Date", "N/A")
                     
-                    task_info = f"        {task_name} - Where: {where}, Description: {description}, Due Date: {due_date}"
+                    task_info = f"        {task_name} - Due Date: {due_date}"
                     self.history_listbox.insert(tk.END, task_info)
 
     def delete_task_from_history(self):
@@ -227,6 +251,11 @@ class App:
 
 
     def add_listbox(self):
+        self.tree.tag_configure('high_priority', background='#9d1a1f', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('medium_priority', background='#f46523', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('low_priority', background='#f9ee3a', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('done', background='#42b84a', foreground='black', font=("Arial", 16))  # Tag for done tasks
+
         try:
             # Open the JSON file and load the data
             with open('HCI project/task.json', 'r') as json_file:
@@ -234,33 +263,69 @@ class App:
                 print("Tasks loaded successfully:", self.alltask)
         except FileNotFoundError:
             print("The file 'task.json' was not found.")
+            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
         except json.JSONDecodeError:
             print("Error decoding JSON from the file.")
+            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
         except Exception as e:
             print("An error occurred:", str(e))
-            
-        # Clear the Listbox
-        self.listbox.delete(0, tk.END)
-        
+            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
+
+        # Clear the Treeview
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        def get_priority_tag(priority):
+            """Returns the appropriate tag based on priority."""
+            if priority.lower() == "high":
+                return 'high_priority'
+            elif priority.lower() == "medium":
+                return 'medium_priority'
+            elif priority.lower() == "low":
+                return 'low_priority'
+            else:
+                return ''  # No tag if priority is unknown
+
         # Check if 'Personal' category exists and loop through personal tasks
         if "Personal" in self.alltask:
-                for task_key, task_info in self.alltask["Personal"].items():
-                        # Display the subcategory (task_key) directly in the listbox
-                        task_title = task_key
-                        print(f"Adding Personal Task: {task_title}")  # Debug print
-                        self.listbox.insert(tk.END, f"Personal: {task_title}")
-        
+            for task_key, task_info in self.alltask["Personal"].items():
+                task_title = task_key
+                priority = task_info.get("Priority", "N/A")  # Get priority, default to "N/A"
+                status = task_info.get("Status", "Pending")      # Get status, default to "N/A"
+                due_date = task_info.get("Due Date", "N/A")  # Get due date, default to "N/A"
+                tag = get_priority_tag(priority)  # Get the priority tag
+
+                # Add the done tag if status is "Done"
+                if status.lower() == "done":
+                    tag = 'done'  # Override tag to 'done' if the status is done
+
+                print(f"Adding Personal Task: {task_title}, Priority: {priority}, Status: {status}, Due Date: {due_date}")  # Debug print
+                # Insert the task into the Treeview with the appropriate tag
+                self.tree.insert("", tk.END, values=(task_title, priority, status, due_date, "Personal"), tags=(tag,))
+
         # Check if 'Academic' category exists and loop through academic tasks
         if "Academic" in self.alltask:
-                for task_key, task_info in self.alltask["Academic"].items():
-                        # Use the 'subject' field as the task title, fall back to default if not available
-                        task_title = task_key
-                        print(f"Adding Academic Task: {task_title}")  # Debug print
-                        self.listbox.insert(tk.END, f"Academic: {task_title}")
+            for task_key, task_info in self.alltask["Academic"].items():
+                task_title = task_key
+                priority = task_info.get("Priority", "N/A")  # Get priority, default to "N/A"
+                status = task_info.get("Status", "Pending")      # Get status, default to "N/A"
+                due_date = task_info.get("Due Date", "N/A")  # Get due date, default to "N/A"
+                tag = get_priority_tag(priority)  # Get the priority tag
+
+                # Add the done tag if status is "Done"
+                if status.lower() == "done":
+                    tag = 'done'  # Override tag to 'done' if the status is done
+
+                print(f"Adding Academic Task: {task_title}, Priority: {priority}, Status: {status}, Due Date: {due_date}")  # Debug print
+                # Insert the task into the Treeview with the appropriate tag
+                self.tree.insert("", tk.END, values=(task_title, priority, status, due_date, "Academic"), tags=(tag,))
 
         # Print a message if no tasks are found
-        if not self.listbox.size():
-                print("No tasks found to display.")
+        if not self.tree.get_children():
+            print("No tasks found to display.")
+
+
+
 
 
 
@@ -312,9 +377,19 @@ class App:
         self.Clabel.pack(pady=10)
 
         # Create a Combobox for task categories
-        self.category_combo = ttk.Combobox(self.task_chooser, values=["Academic", "Personal"], font=("Arial", 12))
-        self.category_combo.pack(pady=10)
-        self.category_combo.bind("<<ComboboxSelected>>", self.on_category_selected)
+        self.category_combo = tk.StringVar(value="Academic")  # Default value
+
+        # Create a frame to hold the radio buttons
+        radio_frame = tk.Frame(self.task_chooser)
+        radio_frame.pack(pady=10)
+
+        # Create radio buttons for 'Academic' and 'Personal'
+        academic_radio = tk.Radiobutton(radio_frame, text="Academic", variable=self.category_combo, value="Academic", font=("Arial", 12), command=self.on_category_selected)
+        personal_radio = tk.Radiobutton(radio_frame, text="Personal", variable=self.category_combo, value="Personal", font=("Arial", 12), command=self.on_category_selected)
+
+        # Pack the radio buttons horizontally
+        academic_radio.pack(side=tk.LEFT, padx=10)
+        personal_radio.pack(side=tk.LEFT, padx=10)
         
         self.Slabel = tk.Label(self.task_chooser, text="Sub Categories", font=("Arial", 14))
         self.Slabel.pack(pady=10)
@@ -337,7 +412,7 @@ class App:
 
         
         
-    def on_category_selected(self, event):
+    def on_category_selected(self):
         # Get the selected category
         category = self.category_combo.get()
 
@@ -361,13 +436,18 @@ class App:
         self.subcategory_window.title("Task Subcategory")
 
         # Set a larger size for the window
-        self.subcategory_window.geometry("400x300")
+        self.subcategory_window.geometry("400x400")  # Increased height to accommodate radio buttons
 
-        # Subject Entry
+        # Subject Label
         self.subject_label = tk.Label(self.subcategory_window, text="Subject:", font=('Arial', 12))
         self.subject_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')  # Align to the west
-        self.subject_entry = tk.Entry(self.subcategory_window, font=('Arial', 12), width=30)
-        self.subject_entry.grid(row=0, column=1, padx=10, pady=10)
+        
+        # Subjects for ComboBox
+        subjects = ["Mathematics", "Science", "History", "English", "Computer Science", "Art"]
+
+        # Subject ComboBox
+        self.subject_combobox = ttk.Combobox(self.subcategory_window, values=subjects, font=('Arial', 12), width=28)
+        self.subject_combobox.grid(row=0, column=1, padx=10, pady=10)
 
         # Description Entry
         self.description_label = tk.Label(self.subcategory_window, text="Description:", font=('Arial', 12))
@@ -383,29 +463,47 @@ class App:
         self.due_date_button = tk.Button(self.subcategory_window, text="Select Due Date", command=self.showCalendar, font=('Arial', 12), width=20)
         self.due_date_button.grid(row=2, column=1, padx=10, pady=10)
 
+        # Priority Label
+        self.priority_label = tk.Label(self.subcategory_window, text="Priority:", font=('Arial', 12))
+        self.priority_label.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+
+        # Variable to hold priority selection
+        self.priority_var = tk.StringVar(value="Medium")  # Default value
+
+        # Radio Buttons for Priority
+        self.high_priority = tk.Radiobutton(self.subcategory_window, text="High", variable=self.priority_var, value="High", font=('Arial', 12))
+        self.high_priority.grid(row=3, column=1, padx=10, pady=5, sticky='w')
+
+        self.medium_priority = tk.Radiobutton(self.subcategory_window, text="Medium", variable=self.priority_var, value="Medium", font=('Arial', 12))
+        self.medium_priority.grid(row=4, column=1, padx=10, pady=5, sticky='w')
+
+        self.low_priority = tk.Radiobutton(self.subcategory_window, text="Low", variable=self.priority_var, value="Low", font=('Arial', 12))
+        self.low_priority.grid(row=5, column=1, padx=10, pady=5, sticky='w')
+
         # Submit Button
         self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=self.submit_task, font=('Arial', 12), width=20)
-        self.submit_button.grid(row=3, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
+        self.submit_button.grid(row=6, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
 
         # Make the layout more spacious
-        for i in range(4):
-            self.subcategory_window.grid_rowconfigure(i, weight=1)
+        for i in range(7):
+                self.subcategory_window.grid_rowconfigure(i, weight=1)
         for j in range(2):
-            self.subcategory_window.grid_columnconfigure(j, weight=1)
+                self.subcategory_window.grid_columnconfigure(j, weight=1)
     
     def open_personal_task_window(self):
         self.subcategory_window = tk.Toplevel(self.root)
         self.subcategory_window.title("Personal Task")
 
         # Set a larger size for the window
-        self.subcategory_window.geometry("400x300")
+        self.subcategory_window.geometry("400x400")  # Increased height to accommodate radio buttons
 
-        # Personal Task Selection (using a Combobox)
+        # Personal Task Selection (using an Entry)
         self.task_label = tk.Label(self.subcategory_window, text="Where:", font=('Arial', 12))
         self.task_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
-        self.where = tk.Entry(self.subcategory_window, font=('Arial', 12), width=30)
-        self.where.grid(row=0, column=1, padx=10, pady=10)
+        # Where Entry
+        self.where_entry = tk.Entry(self.subcategory_window, font=('Arial', 12), width=30)
+        self.where_entry.grid(row=0, column=1, padx=10, pady=10)
 
         # Description Entry
         self.description_label = tk.Label(self.subcategory_window, text="Description:", font=('Arial', 12))
@@ -421,26 +519,33 @@ class App:
         self.due_date_button = tk.Button(self.subcategory_window, text="Select Due Date", command=self.showCalendar, font=('Arial', 12), width=20)
         self.due_date_button.grid(row=2, column=1, padx=10, pady=10)
 
+        # Priority Label
+        self.priority_label = tk.Label(self.subcategory_window, text="Priority:", font=('Arial', 12))
+        self.priority_label.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+
+        # Variable to hold priority selection
+        self.priority_var = tk.StringVar(value="Medium")  # Default value
+
+        # Radio Buttons for Priority
+        self.high_priority = tk.Radiobutton(self.subcategory_window, text="High", variable=self.priority_var, value="High", font=('Arial', 12))
+        self.high_priority.grid(row=3, column=1, padx=10, pady=5, sticky='w')
+
+        self.medium_priority = tk.Radiobutton(self.subcategory_window, text="Medium", variable=self.priority_var, value="Medium", font=('Arial', 12))
+        self.medium_priority.grid(row=4, column=1, padx=10, pady=5, sticky='w')
+
+        self.low_priority = tk.Radiobutton(self.subcategory_window, text="Low", variable=self.priority_var, value="Low", font=('Arial', 12))
+        self.low_priority.grid(row=5, column=1, padx=10, pady=5, sticky='w')
+
         # Submit Button
         self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=self.submit_task, font=('Arial', 12), width=20)
-        self.submit_button.grid(row=3, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
+        self.submit_button.grid(row=6, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
 
         # Make the layout more spacious
-        for i in range(4):
-            self.subcategory_window.grid_rowconfigure(i, weight=1)
+        for i in range(7):
+                self.subcategory_window.grid_rowconfigure(i, weight=1)
         for j in range(2):
-            self.subcategory_window.grid_columnconfigure(j, weight=1)
+                self.subcategory_window.grid_columnconfigure(j, weight=1)
             
-
-        
-    def add_task(self):
-        # Get the selected task from the task combo box
-        selected_task = self.task_combo.get()
-        if selected_task:
-            print(f"Task '{selected_task}' added to the list!")
-        else:
-            print("No task selected!")
-                
             
     def on_entry_clickSearch(self, event):
         if self.searchBar.get() == self.searchbar_placeholder:
@@ -453,12 +558,16 @@ class App:
     
         
     def submit_task(self):
-        sub = self.task_combo.get()
+        # Get the category and task prefix from the combo boxes
+        sub = self.task_combo.get().strip()
         category = self.category_combo.get()
+
+        # Get priority
+        priority = self.priority_var.get()  # Get the selected priority from radio buttons
 
         # File name for storing tasks
         filename = 'HCI project/task.json'
-        
+
         # Load existing tasks or initialize an empty dictionary
         if os.path.exists(filename):
                 with open(filename, 'r') as json_file:
@@ -476,7 +585,7 @@ class App:
         # Determine the correct category and handle both personal and academic tasks
         if category == "Personal":
                 # Get personal task entry data
-                where = self.where.get().strip()  # Get the entry from 'where' (use subcategory as task key)
+                where = self.where_entry.get().strip()  # Get the entry from 'where' (combo box)
                 description = self.description_entry.get("1.0", tk.END).strip()
                 due_date = self.full_time  # Assume full_time is set when selecting the date
 
@@ -485,6 +594,8 @@ class App:
                         "where": where,
                         "description": description,
                         "Due Date": due_date,
+                        "Priority": priority,  # Include priority
+                        "Status": "Pending"
                 }
 
                 # Add the new personal task to the all_tasks dictionary
@@ -492,7 +603,7 @@ class App:
 
         elif category == "Academic":
                 # Get academic task entry data
-                subject = self.subject_entry.get().strip()  # Use subject as the task key
+                subject = self.subject_combobox.get().strip()  # Use subject from the combo box
                 description = self.description_entry.get("1.0", tk.END).strip()
                 due_date = self.full_time  # Assume full_time is set when selecting the date
 
@@ -501,6 +612,8 @@ class App:
                         "subject": subject,
                         "description": description,
                         "Due Date": due_date,
+                        "Priority": priority,
+                        "Status": "Pending" # Include priority
                 }
 
                 # Add the new academic task to the all_tasks dictionary
@@ -516,48 +629,38 @@ class App:
         self.task_chooser.destroy()
         self.add_listbox()
 
+
         
     def display_selected_task(self, event):
         # Ensure something is selected
-        if not self.listbox.curselection():
+        selected_item = self.tree.selection()
+        if not selected_item:
             return  # Exit if nothing is selected
 
         # Create a new Toplevel window to show task details
-        details_window = tk.Toplevel()
-        details_window.geometry("800x600")  # Ensure the window is large enough
+        self.details_window = tk.Toplevel()
+        self.details_window.geometry("800x700")  # Ensure the window is large enough
 
         # Title label directly in the details_window
-        title_label = tk.Label(details_window, text="Task Details", font=("Times", 30, "bold"), pady=20, fg="#518D45")
+        title_label = tk.Label(self.details_window, text="Task Details", font=("Times", 30, "bold"), pady=20, fg="#518D45")
         title_label.pack()
 
-        # Get the selected index from the listbox
-        selected_index = self.listbox.curselection()[0]  # Get the index of the selected task
+        # Get the selected task details
+        selected_task = self.tree.item(selected_item)
 
-        # Retrieve the task key
-        selected_task_text = self.listbox.get(selected_index)
-
-        # Check whether the selected task belongs to the personal or academic category
-        if selected_task_text.startswith("Personal:"):
-            category = "Personal"
-            task_title = selected_task_text.replace("Personal: ", "")  # Extract task title
-        elif selected_task_text.startswith("Academic:"):
-            category = "Academic"
-            task_title = selected_task_text.replace("Academic: ", "")  # Extract task title
-        else:
-            return  # Do nothing if no valid task is selected
+        # Extract values from the selected task (task title, priority, status, etc.)
+        task_title, priority, status, due_date, category = selected_task['values']
 
         # Display Category Label
-        category_label = tk.Label(details_window, text=f"Category: {category}", font=("Arial", 20), pady=10, fg="#518D45")
+        category_label = tk.Label(self.details_window, text=f"Category: {category}", font=("Arial", 20), pady=10, fg="#518D45")
         category_label.pack()
 
-        # Display Subcategory Label (Task Title)
-        task_label = tk.Label(details_window, text=f"Task: {task_title}", font=("Arial", 20), pady=10, fg="#518D45")
+        # Display Task Title
+        task_label = tk.Label(self.details_window, text=f"Task: {task_title}", font=("Arial", 20), pady=10, fg="#518D45")
         task_label.pack()
 
         # Find the task details using the task title
-        task_info = None
-        if category in self.alltask and task_title in self.alltask[category]:
-            task_info = self.alltask[category][task_title]
+        task_info = self.alltask.get(category, {}).get(task_title, {})
 
         if not task_info:
             return  # Exit if task not found
@@ -565,16 +668,16 @@ class App:
         # Display task details as labels
         for key, value in task_info.items():
             if key == "description":
-                description_text = tk.Text(details_window, font=("Arial", 18), fg="#518D45", height=5, width=50)
+                description_text = tk.Text(self.details_window, font=("Arial", 18), fg="#518D45", height=5, width=50)
                 description_text.insert(tk.END, value)  # Insert the description into the Text widget
                 description_text.pack(pady=10)
                 description_text.config(state=tk.DISABLED)  # Make it read-only
             else:
-                tk.Label(details_window, text=f"{key.capitalize()}: {value}", font=("Arial", 18), fg="#518D45").pack(pady=10)
+                tk.Label(self.details_window, text=f"{key.capitalize()}: {value}", font=("Arial", 18), fg="#518D45").pack(pady=10)
 
         # Create a Text widget to display the task context if it exists
         if "context" in task_info:
-            context_text = tk.Text(details_window, font=("Arial", 18), fg="#518D45", height=10, width=80)
+            context_text = tk.Text(self.details_window, font=("Arial", 18), fg="#518D45", height=10, width=80)
             context_text.pack(padx=10, pady=10)
 
             # Insert task context into the Text widget
@@ -582,11 +685,11 @@ class App:
             context_text.config(state=tk.DISABLED)  # Make it read-only
 
         # Create the "Mark as Done" button
-        mark_done_frame = tk.Frame(details_window)
+        mark_done_frame = tk.Frame(self.details_window)
         mark_done_frame.pack(pady=10, anchor="center")  # Pack the frame and center it
 
         # Mark as Done button
-        mark_done_button = tk.Button(mark_done_frame, text="Mark as Done", font=("Arial", 16), command=lambda: self.archive_task(category, task_title),fg="#518D45")
+        mark_done_button = tk.Button(mark_done_frame, text="Mark as Done", font=("Arial", 16), command=lambda: self.mark_task_as_done(category, task_title, selected_item), fg="#518D45")
         mark_done_button.pack(side="left", padx=10)  # Pack the button to the left with padding
 
         # Load and resize the delete image
@@ -599,9 +702,51 @@ class App:
         delete_label.image = delete_photo  # Keep a reference to the image
         delete_label.pack(side="left", padx=10)  # Pack the label to the left with padding
 
-
         # Bind the delete image click to the delete_task method
         delete_label.bind("<Button-1>", lambda e: self.delete_task(category, task_title))
+
+# Function to mark a task as done
+    def mark_task_as_done(self, category, task_title, selected_item):
+     if category in self.alltask and task_title in self.alltask[category]:
+        # Update the task's status to 'Done'
+        self.alltask[category][task_title]['Status'] = 'Done'  # Ensure 'Status' matches your JSON structure
+        print(f"Updated {task_title} status to Done")  # Debug print
+        
+
+        # Change the Treeview row's color to indicate it's done (green background)
+        self.tree.item(selected_item, tags=('done',))  # Apply 'done' tag
+        self.tree.tag_configure('done', background='#42b84a', foreground='black')  # Set color for 'done' tasks
+
+        # Save the updated tasks to the JSON file
+        self.save_tasks_to_json()  # Call save method
+        print(f"Tasks saved to JSON: {self.alltask}")  # Debug print
+
+        # Close the details window
+        self.details_window.destroy()
+     else:
+        print("Task not found for updating.")  # Debug print for error handling
+        
+
+    def save_tasks_to_json(self):
+        # Save the current tasks to a JSON file
+        with open("HCI project/task.json", "w") as f:
+            json.dump(self.alltask, f, indent=4)
+        self.add_listbox()
+        
+
+# Function to delete a task
+    def delete_task(self, category, task_title):
+        # Remove the task from the internal data
+        if category in self.alltask and task_title in self.alltask[category]:
+            del self.alltask[category][task_title]
+
+        # Update the Treeview to reflect the deletion
+        selected_item = self.tree.selection()[0]
+        self.tree.delete(selected_item)
+        
+        # Close the details window
+        self.details_window.destroy()
+
 
     def delete_task(self, category, task_title):
         # Load existing tasks from task.json
@@ -619,6 +764,7 @@ class App:
 
             # Archive the deleted task to archives.json
             self.archive_task(category, task_title, task_info)
+            self.details_window.destroy()
 
             # Update the listbox
             self.add_listbox()
@@ -639,6 +785,112 @@ class App:
         # Write the updated archives back to archives.json
         with open('HCI project/archives.json', 'w') as file:
             json.dump(archives, file, indent=4)
+    
+    def load_tasks(self):
+        with open('HCI project/task.json', 'r') as file:
+            self.data = json.load(file)
+            
+    def show_sorter(self, event):
+        self.load_tasks()
+        sorter_window = tk.Toplevel()
+        sorter_window.title("Task Sorter")
+        sorter_window.geometry("400x400")
+
+        # Create a frame for the scrollbar and the content
+        frame = tk.Frame(sorter_window)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        # Create a canvas to hold the content
+        canvas = tk.Canvas(frame)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Create a scrollbar
+        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Configure the canvas to work with the scrollbar
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Create another frame to hold the content within the canvas
+        content_frame = tk.Frame(canvas)
+
+        # Create a window in the canvas to hold the content frame
+        canvas.create_window((0, 0), window=content_frame, anchor="nw")
+
+        # Update scrollregion after creating widgets
+        def on_frame_configure(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
+
+        content_frame.bind("<Configure>", on_frame_configure)
+
+        # Get today's date
+        today = datetime.now().date()
+        tomorrow = today + timedelta(days=1)
+
+        # Initialize sorted task categories
+        today = datetime.now().date()  # Ensure this is correctly set
+        tomorrow = today + timedelta(days=1)
+
+        # Make sure sorted_tasks structure is initialized correctly
+        sorted_tasks = {
+                "Overdue": {},
+                "Due Today": {},
+                "Due Tomorrow": {},
+                "Next Week": {}
+                
+        }
+
+        for category, tasks in self.data.items():
+                for task_name, task_details in tasks.items():
+                        due_date_str = task_details.get("Due Date")
+                        if due_date_str:
+                                try:
+                                        due_date = datetime.strptime(due_date_str, "%m/%d/%y %I:%M %p")
+                                        due_date_only = due_date.date()
+
+                                        # Debugging output to trace due dates
+                                        print(f"Task: {task_name}, Due Date: {due_date_only}")
+
+                                        if due_date_only < today:
+                                                sorted_tasks["Overdue"].setdefault(category, {})[task_name] = task_details
+                                        elif due_date_only == today:
+                                                sorted_tasks["Due Today"].setdefault(category, {})[task_name] = task_details
+                                        elif due_date_only == tomorrow:
+                                                sorted_tasks["Due Tomorrow"].setdefault(category, {})[task_name] = task_details
+                                        elif today < due_date_only <= (today + timedelta(days=7)):
+                                                sorted_tasks["Next Week"].setdefault(category, {})[task_name] = task_details
+
+                                except ValueError:
+                                        print(f"Error parsing date: {due_date_str}")
+
+        print(f"Sorted tasks: {sorted_tasks}")
+
+
+        # Function to create labels for tasks
+        def populate_labels(frame, title, tasks):
+                title_label = tk.Label(frame, text=title, font=("Helvetica", 12, "bold"))
+                title_label.pack(side=tk.TOP, pady=5)
+
+                for category, task_items in tasks.items():
+                        for task_name, task_details in task_items.items():
+                                due_date = task_details.get("Due Date")
+                                task_info = f"{category}: {task_name} - Due: {due_date}"
+                                task_label = tk.Label(frame, text=task_info, font=("Helvetica", 10))
+                                task_label.pack(side=tk.TOP)
+
+        # Create labels for each category vertically
+        categories = ["Overdue", "Due Today", "Due Tomorrow", "Next Week"]
+
+        for category in categories:
+                category_frame = tk.Frame(content_frame)
+                category_frame.pack(side=tk.TOP, padx=10, pady=10)  # Stack category frames vertically
+                populate_labels(category_frame, category, sorted_tasks[category])
+
+        sorter_window.mainloop()  # Start the GUI event loop
+
+ 
+
+
 
 
   
@@ -734,14 +986,7 @@ class App:
             self.duedate_entry.insert(0, self.due)
             self.duedate_entry.config(fg='#518D45')
         
-        
-        
-        
-        
-        
-        
-        
-        
+
 
 root = tk.Tk()
 app = App(root)

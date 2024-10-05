@@ -1,10 +1,48 @@
 {
     "Personal": {
         "Grocery Shopping": {
-            "where": "qew",
-            "description": "qweqwe",
-            "Due Date": "10/4/24 1:00 AM"
+            "where": "231",
+            "description": "123",
+            "Due Date": "10/5/24 1:00 AM",
+            "Priority": "High",
+            "Status": "Done"
+        },
+        "Cook": {
+            "where": "wd",
+            "description": "asdasd",
+            "Due Date": "10/5/24 1:00 AM",
+            "Priority": "Low",
+            "Status": "Done"
+        },
+        "Clean": {
+            "where": "d",
+            "description": "asdas",
+            "Due Date": "10/5/24 1:00 AM",
+            "Priority": "Medium",
+            "Status": "Done"
+        },
+        "Clean1": {
+            "where": "dsa",
+            "description": "dasd",
+            "Due Date": "10/5/24 1:00 AM",
+            "Priority": "Medium",
+            "Status": "Pending"
+        },
+        "Clean2": {
+            "where": "3112",
+            "description": "3123123123",
+            "Due Date": "10/5/24 1:00 AM",
+            "Priority": "Low",
+            "Status": "Pending"
         }
     },
-    "Academic": {}
+    "Academic": {
+        "Prepare for Exam": {
+            "subject": "History",
+            "description": "dasdas",
+            "Due Date": "10/5/24 1:00 AM",
+            "Priority": "High",
+            "Status": "Pending"
+        }
+    }
 }
