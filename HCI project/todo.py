@@ -7,20 +7,170 @@ import sys
 import os
 from tkinter import  messagebox
 from datetime import datetime, timedelta
+import time
+import threading
+from tkinter import Label,Frame,Button
 
 
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.geometry("1430x800")
+        
         
         self.alltask = {}
-        self.root.title("To Do List")
+        
         self.data = {}
         self.load_tasks()
 
+        # Call the main window setup
+        
+        self.root.title("Login")
+        self.root.geometry("900x600")
+
+        # Placeholder texts
+        self.placeholder_username = "Username"
+        self.placeholder_password = "Password"
+
+        # Hardcoded valid credentials for login
+        self.valid_username = "admin"
+        self.valid_password = "password123"
+
+        # Load image
+        imgPath = r"C:\Users\micov\OneDrive\Desktop\HCI project\face.png"
+        img = Image.open(imgPath)
+        new_size = (120, 100)  # Specify the new size (width, height)
+        img_resized = img.resize(new_size, Image.LANCZOS)
+        self.photo = ImageTk.PhotoImage(img_resized)
+
+        
+        # Show login by default
+        self.show_login()
+
+        self.root.mainloop()
+
+    def show_login(self):
+
+        # Clear the main frame
+        self.login_window = tk.Toplevel()
+        self.login_window.title("Login")
+        self.main_frame = Frame(self.login_window, bg="#518d45", height=500, width=900)
+        self.main_frame.pack_propagate(False)
+        self.main_frame.pack(padx=50, pady=50)
+        self.login_window.geometry("900x600")
+        self.login_window.config(bg="white")
+        self.main_frame.config(bg="#518d45")
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+        # Create title label
+        title_label = Label(self.main_frame, text="Login", bg="#518d45", fg="white", font=("Arial", 20, "bold"))
+        title_label.pack(pady=10)
+
+        # Create image label
+        label = Label(self.main_frame, image=self.photo, bg="#518d45")
+        label.pack(padx=10, pady=10)
+
+        # Username entry
+        self.username = tk.Entry(self.main_frame, fg='#505050', font=("Arial", 12), width=40)
+        self.username.insert(0, self.placeholder_username)
+        self.username.bind('<FocusIn>', self.on_entry_click)
+        self.username.bind('<FocusOut>', self.on_focusout)
+        self.username.pack(padx=10, pady=10, ipady=9)
+
+        # Password entry
+        self.password = tk.Entry(self.main_frame, fg='#505050', font=("Arial", 12), show='*', width=40)
+        self.password.insert(0, self.placeholder_password)
+        self.password.bind('<FocusIn>', self.on_entry_clickP)
+        self.password.bind('<FocusOut>', self.on_focusoutP)
+        self.password.pack(padx=10, pady=10, ipady=9)
+
+        # Login button
+        login = Button(self.main_frame, text="Login", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.login)
+        login.pack(padx=20, pady=10)
+
+        # Create Account button
+        create_account = Button(self.main_frame, text="Create Account", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.show_create_account)
+        create_account.pack(padx=20, pady=10)
+
+    def login(self):
+        entered_username = self.username.get()
+        entered_password = self.password.get()
+
+        # Check if the entered username and password are correct
+        if entered_username == self.valid_username and entered_password == self.valid_password:
+            messagebox.showinfo("Login Successful", "Welcome to the To-Do List App!")
+            self.mainwindow()
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password. Please try again.")
+
+    def show_create_account(self):
+        # Clear the main frame
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+            
+        self.main_frame.config(bg="white")
+        self.root.config(bg="#518d45")
+
+        # Create title label
+        title_label = Label(self.main_frame, text="Create Account", bg="white", fg="#518d45", font=("Arial", 20, "bold"))
+        title_label.pack(pady=10)
+
+        # Create image label
+        label = Label(self.main_frame, image=self.photo, bg="white")
+        label.pack(padx=10, pady=10)
+
+        # Username entry
+        self.new_username = tk.Entry(self.main_frame, fg='#505050', font=("Arial", 12), width=40)
+        self.new_username.insert(0, self.placeholder_username)
+        self.new_username.bind('<FocusIn>', self.on_entry_click)
+        self.new_username.bind('<FocusOut>', self.on_focusout)
+        self.new_username.pack(padx=10, pady=10, ipady=9)
+
+        # Password entry
+        self.new_password = tk.Entry(self.main_frame, fg='#505050', font=("Arial", 12), show='*', width=40)
+        self.new_password.insert(0, self.placeholder_password)
+        self.new_password.bind('<FocusIn>', self.on_entry_clickP)
+        self.new_password.bind('<FocusOut>', self.on_focusoutP)
+        self.new_password.pack(padx=10, pady=10, ipady=9)
+
+        # Create Account button
+        create = Button(self.main_frame, text="Create Account", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"))
+        create.pack(padx=20, pady=10)
+
+        # Back to Login button
+        back_to_login = Button(self.main_frame, text="Back to Login", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.show_login)
+        back_to_login.pack(padx=20, pady=10)
+
+    def on_entry_click(self, event):
+        entry = event.widget
+        if entry.get() == self.placeholder_username:
+            entry.delete(0, "end")  # delete all the text in the entry
+            entry.config(fg="#000000")  # Darker text when typing
+
+    def on_focusout(self, event):
+        entry = event.widget
+        if entry.get() == '':
+            entry.insert(0, self.placeholder_username)
+            entry.config(fg='#505050')  # Darker placeholder color
+
+    def on_entry_clickP(self, event):
+        entry = event.widget
+        if entry.get() == self.placeholder_password:
+            entry.delete(0, "end")  # delete all the text in the entry
+            entry.config(fg="#000000")  # Darker text when typing
+
+    def on_focusoutP(self, event):
+        entry = event.widget
+        if entry.get() == '':
+            entry.insert(0, self.placeholder_password)
+            entry.config(fg='#505050')  # Darker placeholder color
+        
+        
+    def mainwindow(self):
+        mainwindow = tk.Toplevel(self.root)
+        mainwindow.geometry("1430x800")
         # Create the main frame
-        frontFrame = tk.Frame(self.root, bg="white")
+        frontFrame = tk.Frame(mainwindow, bg="white")
         frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Configure grid for the main frame
@@ -43,7 +193,7 @@ class App:
         log.image = img
 
         # Title label for the app
-        todotitle = tk.Label(frontFrame, text="To Do List Application", font=("Times", 50), bg="white", fg="#DE6FA1")
+        todotitle = tk.Label(frontFrame, text="To Do List Application", font=("Times", 50), bg="white", fg="#5B5DA8")
         todotitle.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
 
         # Frame for bell and history icons
@@ -97,7 +247,7 @@ class App:
         style.configure("Custom.Treeview", font=("Helvetica", 12))  # Set font size
         style.configure("Custom.Treeview.Heading", font=("Helvetica", 17, "bold"))  # Set heading font size
 
-                # Create the Treeview widget
+        # Create the Treeview widget
         self.tree = ttk.Treeview(self.resultFrame, columns=("Task", "Priority", "Status", "Due Date"), show='headings', height=10)
         self.tree.heading("Task", text="Task")
         self.tree.heading("Priority", text="Priority")
@@ -111,14 +261,11 @@ class App:
         self.tree.column("Due Date", width=150, anchor="center")  # Added Due Date column width
 
         # Apply styles for the entire Treeview
-        style = ttk.Style()
         style.configure("Treeview", rowheight=40)  # Set row height
         style.configure("Treeview.Heading", font=("Arial", 16))  # Set heading font size
         
         style.configure("Custom.Treeview", font=("Helvetica", 12))  # Set font size for the entire Treeview
         
-       
-
         # Set the style to the Treeview
         self.tree.configure(style="Custom.Treeview")
 
@@ -136,11 +283,50 @@ class App:
         add_button.grid(row=3, column=2, padx=10, pady=10, sticky="nsew")
         add_button.image = ad
 
-
         # Insert some sample data
         self.add_listbox()
         self.tree.bind("<ButtonRelease-1>", self.display_selected_task)
+        self.start_monitoring()    
         
+    def check_due_dates(self):
+        """Check the due dates of tasks and alert if a task is overdue."""
+        while True:
+                if hasattr(self, 'tree'):  # Check if self.tree exists
+                        current_time = datetime.now()
+                        for category, task_list in self.data.items():
+                                for task_name, task_info in task_list.items():
+                                        due_date_str = task_info.get("Due Date")
+
+                                        if due_date_str is None:
+                                                print(f"No due date for task '{task_name}'.")
+                                                continue
+
+                                        try:
+                                                due_date = datetime.strptime(due_date_str, "%m/%d/%y %I:%M %p")
+                                        except ValueError as e:
+                                                print(f"Error parsing date for task '{task_name}': {e}")
+                                                continue
+
+                                        # Check if the task is overdue
+                                        if current_time >= due_date and task_info["Status"] == "Pending":
+                                                task_info["Status"] = "Overdue"  # Mark task as overdue
+                                                self.save_tasks()  # Save the updated task status
+                                                messagebox.showinfo("Task Overdue", f"The task '{task_name}' is overdue!")
+
+                        self.add_listbox()  # Update the listbox with any changes
+                time.sleep(30)
+
+
+             
+    def save_tasks(self):
+        """Save the updated tasks to the JSON file."""
+        with open("HCI project/task.json", 'w') as file:
+            json.dump(self.data, file, indent=4)
+            
+    def start_monitoring(self):
+        """Start the monitoring process in a separate thread."""
+        threading.Thread(target=self.check_due_dates, daemon=True).start()
+    
         
 
     def open_history_window(self, event):
@@ -251,10 +437,10 @@ class App:
 
 
     def add_listbox(self):
-        self.tree.tag_configure('high_priority', background='#9d1a1f', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('medium_priority', background='#f46523', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('low_priority', background='#f9ee3a', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('done', background='#42b84a', foreground='black', font=("Arial", 16))  # Tag for done tasks
+        self.tree.tag_configure('high_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('medium_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('low_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('done', background='#43A047', foreground='black', font=("Arial", 16))  # Tag for done tasks
 
         try:
             # Open the JSON file and load the data
@@ -323,6 +509,7 @@ class App:
         # Print a message if no tasks are found
         if not self.tree.get_children():
             print("No tasks found to display.")
+    time.sleep(1)
 
 
 
@@ -794,7 +981,7 @@ class App:
         self.load_tasks()
         sorter_window = tk.Toplevel()
         sorter_window.title("Task Sorter")
-        sorter_window.geometry("400x400")
+        sorter_window.geometry("600x600")  # Make the window bigger
 
         # Create a frame for the scrollbar and the content
         frame = tk.Frame(sorter_window)
@@ -828,18 +1015,14 @@ class App:
         tomorrow = today + timedelta(days=1)
 
         # Initialize sorted task categories
-        today = datetime.now().date()  # Ensure this is correctly set
-        tomorrow = today + timedelta(days=1)
-
-        # Make sure sorted_tasks structure is initialized correctly
         sorted_tasks = {
                 "Overdue": {},
                 "Due Today": {},
                 "Due Tomorrow": {},
                 "Next Week": {}
-                
         }
 
+        # Sorting tasks by their due dates
         for category, tasks in self.data.items():
                 for task_name, task_details in tasks.items():
                         due_date_str = task_details.get("Due Date")
@@ -847,9 +1030,6 @@ class App:
                                 try:
                                         due_date = datetime.strptime(due_date_str, "%m/%d/%y %I:%M %p")
                                         due_date_only = due_date.date()
-
-                                        # Debugging output to trace due dates
-                                        print(f"Task: {task_name}, Due Date: {due_date_only}")
 
                                         if due_date_only < today:
                                                 sorted_tasks["Overdue"].setdefault(category, {})[task_name] = task_details
@@ -863,37 +1043,20 @@ class App:
                                 except ValueError:
                                         print(f"Error parsing date: {due_date_str}")
 
+        # Display sorted tasks with larger font and colored text
+        font = ("Arial", 12)  # Change the font size to make the text bigger
+
+        for category, tasks in sorted_tasks.items():
+                tk.Label(content_frame, text=category, font=("Arial", 14, "bold"), fg="#518D45").pack(anchor="w")  # Category headers in larger bold font
+                for task_category, task_details in tasks.items():
+                        tk.Label(content_frame, text=f"Category: {task_category}", font=("Arial", 12,"bold"), fg="#518D45").pack(anchor="w", padx=10)
+                        for task_name, task_info in task_details.items():
+                                tk.Label(content_frame, text=f"Task: {task_name}", font=font, fg="#518D45").pack(anchor="w", padx=20)
+                                due_date_label = f"Due Date: {task_info['Due Date']}"
+                                tk.Label(content_frame, text=due_date_label, font=font, fg="#518D45").pack(anchor="w", padx=30)
+
         print(f"Sorted tasks: {sorted_tasks}")
 
-
-        # Function to create labels for tasks
-        def populate_labels(frame, title, tasks):
-                title_label = tk.Label(frame, text=title, font=("Helvetica", 12, "bold"))
-                title_label.pack(side=tk.TOP, pady=5)
-
-                for category, task_items in tasks.items():
-                        for task_name, task_details in task_items.items():
-                                due_date = task_details.get("Due Date")
-                                task_info = f"{category}: {task_name} - Due: {due_date}"
-                                task_label = tk.Label(frame, text=task_info, font=("Helvetica", 10))
-                                task_label.pack(side=tk.TOP)
-
-        # Create labels for each category vertically
-        categories = ["Overdue", "Due Today", "Due Tomorrow", "Next Week"]
-
-        for category in categories:
-                category_frame = tk.Frame(content_frame)
-                category_frame.pack(side=tk.TOP, padx=10, pady=10)  # Stack category frames vertically
-                populate_labels(category_frame, category, sorted_tasks[category])
-
-        sorter_window.mainloop()  # Start the GUI event loop
-
- 
-
-
-
-
-  
        
     def showCalendar(self):
         self.calendar = tk.Toplevel()
