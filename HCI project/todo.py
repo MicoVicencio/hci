@@ -10,30 +10,31 @@ from datetime import datetime, timedelta
 import time
 import threading
 from tkinter import Label,Frame,Button
+import mysql.connector
 
 
 class App:
     def __init__(self, root):
         self.root = root
-        
+        self.connect_to_database()
         
         self.alltask = {}
-        
+        self.json_folder = 'HCI project/json_files'
+        if not os.path.exists(self.json_folder):
+            os.makedirs(self.json_folder)
+            
         self.data = {}
-        self.load_tasks()
 
         # Call the main window setup
         
         self.root.title("Login")
-        self.root.geometry("900x600")
-
+        self.root.withdraw()
         # Placeholder texts
         self.placeholder_username = "Username"
         self.placeholder_password = "Password"
 
         # Hardcoded valid credentials for login
-        self.valid_username = "admin"
-        self.valid_password = "password123"
+
 
         # Load image
         imgPath = r"C:\Users\micov\OneDrive\Desktop\HCI project\face.png"
@@ -45,8 +46,23 @@ class App:
         
         # Show login by default
         self.show_login()
-
-        self.root.mainloop()
+        
+        
+        
+    def connect_to_database(self):
+        try:
+            self.db_connection = mysql.connector.connect(
+                host='localhost',         # Replace with your host
+                user='root',     # Replace with your MySQL username
+                password='micopogi',  # Replace with your MySQL password
+                database='users'        # Database name
+            )
+            self.db_cursor = self.db_connection.cursor()
+            print("Database connection successful!")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Connection Error", f"Error: {err}")
+            sys.exit(1)
+        
 
     def show_login(self):
 
@@ -91,25 +107,46 @@ class App:
         # Create Account button
         create_account = Button(self.main_frame, text="Create Account", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.show_create_account)
         create_account.pack(padx=20, pady=10)
+        
+    def log(self):
+        self.create_account_window.destroy()
+        self.show_login()
+            
 
     def login(self):
-        entered_username = self.username.get()
-        entered_password = self.password.get()
+        self.entered_username = self.username.get()
+        self.entered_password = self.password.get()
 
-        # Check if the entered username and password are correct
-        if entered_username == self.valid_username and entered_password == self.valid_password:
-            messagebox.showinfo("Login Successful", "Welcome to the To-Do List App!")
-            self.mainwindow()
-        else:
-            messagebox.showerror("Login Failed", "Invalid username or password. Please try again.")
+        try:
+            self.db_cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (self.entered_username, self.entered_password))
+            result = self.db_cursor.fetchone()
+            if result:
+                messagebox.showinfo("Login Successful", "Welcome to the To-Do List App!")
+                self.Amainwindow()  # Call your main window method
+            else:
+                messagebox.showerror("Login Failed", "Invalid username or password. Please try again.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Error: {err}")
+        
 
     def show_create_account(self):
         # Clear the main frame
+        self.create_account_window = tk.Toplevel()
+        self.create_account_window.title("Create Account")
+        self.create_account_window.geometry("900x600")
+        self.create_account_window.config(bg="#518d45")
+
+        # Create main frame for the create account window
+        self.main_frame = Frame(self.create_account_window, bg="white", height=500, width=900)
+        self.main_frame.pack_propagate(False)
+        self.main_frame.pack(padx=50, pady=50)
+
+        # Clear any existing widgets in the main frame
         for widget in self.main_frame.winfo_children():
             widget.destroy()
-            
+
         self.main_frame.config(bg="white")
-        self.root.config(bg="#518d45")
+        self.create_account_window.config(bg="#518d45")
 
         # Create title label
         title_label = Label(self.main_frame, text="Create Account", bg="white", fg="#518d45", font=("Arial", 20, "bold"))
@@ -134,13 +171,79 @@ class App:
         self.new_password.pack(padx=10, pady=10, ipady=9)
 
         # Create Account button
-        create = Button(self.main_frame, text="Create Account", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"))
+        create = Button(self.main_frame, text="Create Account", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.create_account)
         create.pack(padx=20, pady=10)
 
         # Back to Login button
-        back_to_login = Button(self.main_frame, text="Back to Login", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.show_login)
+        back_to_login = Button(self.main_frame, text="Back to Login", height=2, width=20, bg="#96cb4b", fg="white", font=("Arial", 13, "bold"), command=self.log)
         back_to_login.pack(padx=20, pady=10)
+        self.login_window.destroy()
 
+
+    def create_account(self):
+        username = self.new_username.get()
+        password = self.new_password.get()
+
+        if username and password:  # Check that fields are not empty
+            self.process_create_account(username, password)
+        else:
+            messagebox.showerror("Input Error", "Username and password cannot be empty.")
+
+    def process_create_account(self, username, password):
+        # Check if username and password are provided
+        if not username or not password:
+                messagebox.showerror("Input Error", "Username and password cannot be empty.")
+                return
+
+        try:
+                # Check if the username already exists
+                self.db_cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+                if self.db_cursor.fetchone():
+                        messagebox.showerror("Username Error", "Username already exists. Please choose a different one.")
+                        return
+
+                # Create filenames for JSON task and archive
+                json_data = {"Personal": {}, "Academic": {}}
+                safe_username = "".join(c if c.isalnum() else "_" for c in username)  # Sanitize the username
+
+                # Default filename if username is not valid (should not occur due to previous checks)
+                if not safe_username:
+                        safe_username = "default_user"
+                
+                # Create task and archive JSON file paths
+                json_task_filename = f"{safe_username}_jsontask.json"
+                json_archive_filename = f"{safe_username}_jsonarchive.json"
+                
+                # Full paths for file writing
+                json_task_path = os.path.join(self.json_folder, json_task_filename)
+                json_archive_path = os.path.join(self.json_folder, json_archive_filename)
+
+                # Write the JSON files
+                with open(json_task_path, 'w') as json_task_file:
+                        json.dump(json_data, json_task_file)
+
+                with open(json_archive_path, 'w') as json_archive_file:
+                        json.dump(json_data, json_archive_file)
+
+                # Insert the new user into the database, including the JSON filenames
+                self.db_cursor.execute(
+                        "INSERT INTO users (username, password, json_task, json_archive) VALUES (%s, %s, %s, %s)",
+                        (username, password, json_task_filename, json_archive_filename)
+                )
+                self.db_connection.commit()  # Commit the changes
+
+                messagebox.showinfo("Account Created", "Your account has been successfully created!")
+                self.create_account_window.destroy()
+                self.show_login()  # Return to the login screen
+
+        except mysql.connector.Error as err:
+                messagebox.showerror("Database Error", f"Error: {err}")
+        except Exception as e:
+                messagebox.showerror("File Error", f"Could not create JSON file: {e}")
+
+
+            
+            
     def on_entry_click(self, event):
         entry = event.widget
         if entry.get() == self.placeholder_username:
@@ -166,11 +269,13 @@ class App:
             entry.config(fg='#505050')  # Darker placeholder color
         
         
-    def mainwindow(self):
-        mainwindow = tk.Toplevel(self.root)
-        mainwindow.geometry("1430x800")
+    def Amainwindow(self):
+        self.login_window.destroy()
+        self.load_tasks()
+        self.mainwindow = tk.Toplevel(self.root)
+        self.mainwindow.geometry("1430x800")
         # Create the main frame
-        frontFrame = tk.Frame(mainwindow, bg="white")
+        frontFrame = tk.Frame(self.mainwindow, bg="white")
         frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Configure grid for the main frame
@@ -214,6 +319,14 @@ class App:
         history_button.pack(side="left", padx=5)
         history_button.image = hist_img
         history_button.bind("<Button-1>", self.open_history_window)
+        
+         # Load and place the exit image
+        exit_img = Image.open("HCI project/exit.png").resize((70, 60), Image.LANCZOS)
+        ex_img = ImageTk.PhotoImage(exit_img)
+        exit_button = tk.Label(bell_history_frame, image=ex_img, bg="white")
+        exit_button.pack(side="left", padx=5)
+        exit_button.image = ex_img
+        exit_button.bind("<Button-1>", self.logout)  # You can bind to any function that closes the window
 
         # Create frame for search bar and icon
         searchFrame = tk.Frame(frontFrame, bg="white")
@@ -288,6 +401,16 @@ class App:
         self.tree.bind("<ButtonRelease-1>", self.display_selected_task)
         self.start_monitoring()    
         
+    def logout(self,event):
+        
+        
+        msg = messagebox.askyesno("Logout Confirmation", "Do you want to logout?")
+        if msg:
+            self.username = ""
+            self.password = ""
+            self.mainwindow.destroy()
+            self.show_login()  
+
     def check_due_dates(self):
         """Check the due dates of tasks and alert if a task is overdue."""
         while True:
@@ -314,13 +437,15 @@ class App:
                                                 messagebox.showinfo("Task Overdue", f"The task '{task_name}' is overdue!")
 
                         self.add_listbox()  # Update the listbox with any changes
-                time.sleep(30)
+                time.sleep(10)
 
 
              
     def save_tasks(self):
         """Save the updated tasks to the JSON file."""
-        with open("HCI project/task.json", 'w') as file:
+        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+        
+        with open(path, 'w') as file:
             json.dump(self.data, file, indent=4)
             
     def start_monitoring(self):
@@ -365,8 +490,9 @@ class App:
         self.load_history()
 
     def load_history(self):
-      if os.path.exists('HCI project/archives.json'):
-        with open('HCI project/archives.json', 'r') as file:
+      path = f"HCI project/json_files/{self.entered_username}_jsonarchive.json"
+      if os.path.exists(path):
+        with open(path, 'r') as file:
             history = json.load(file)
             
             # Iterate over each category and task
@@ -374,7 +500,7 @@ class App:
                 # Insert the category as a header
                 self.history_listbox.insert(tk.END, f"{category}:")
                 
-                self.history_listbox.itemconfig(tk.END, {'fg': 'blue'})  # Optional: Make category stand out
+                self.history_listbox.itemconfig(tk.END, {'fg': '#518d45'})  # Optional: Make category stand out
 
                 for task_name, details in tasks.items():
                     # Format the task details with an 8-space indent
@@ -396,7 +522,8 @@ class App:
 
             # Load existing archives from archives.json
             try:
-                with open('HCI project/archives.json', 'r') as file:
+                path = f"HCI project/json_files/{self.entered_username}_jsonarchive.json"
+                with open(path, 'r') as file:
                     archives = json.load(file)
             except FileNotFoundError:
                 messagebox.showerror("Error", "Archives file not found.")
@@ -415,7 +542,8 @@ class App:
 
             if archive_task_found:
                 # Save the updated archives back to archives.json
-                with open('HCI project/archives.json', 'w') as file:
+                path = f"HCI project/json_files/{self.entered_username}_jsonarchive.json"
+                with open(path, 'w') as file:
                     json.dump(archives, file, indent=4)
                 messagebox.showinfo("Task Deleted", f"The task '{task_to_delete}' has been deleted from archives.")
             else:
@@ -443,8 +571,9 @@ class App:
         self.tree.tag_configure('done', background='#43A047', foreground='black', font=("Arial", 16))  # Tag for done tasks
 
         try:
+            path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
             # Open the JSON file and load the data
-            with open('HCI project/task.json', 'r') as json_file:
+            with open(path, 'r') as json_file:
                 self.alltask = json.load(json_file)  # Load data into self.alltask
                 print("Tasks loaded successfully:", self.alltask)
         except FileNotFoundError:
@@ -610,7 +739,7 @@ class App:
         # Populate the task combo based on selected category
         if category == "Academic":
             self.task_combo['values'] = academic_tasks
-        elif category == "Personal":
+        elif category == "Personal": 
             self.task_combo['values'] = personal_tasks
 
         # Set the first task as default in the task combo box
@@ -753,11 +882,11 @@ class App:
         priority = self.priority_var.get()  # Get the selected priority from radio buttons
 
         # File name for storing tasks
-        filename = 'HCI project/task.json'
+        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
 
         # Load existing tasks or initialize an empty dictionary
-        if os.path.exists(filename):
-                with open(filename, 'r') as json_file:
+        if os.path.exists(path):
+                with open(path, 'r') as json_file:
                         all_tasks = json.load(json_file)
         else:
                 all_tasks = {"Personal": {}, "Academic": {}}  # Ensure these keys match consistently
@@ -807,7 +936,7 @@ class App:
                 all_tasks["Academic"][subname] = task_info
 
         # Save the updated all_tasks dictionary to the JSON file
-        with open(filename, 'w') as json_file:
+        with open(path, 'w') as json_file:
                 json.dump(all_tasks, json_file, indent=4)
 
         # Print confirmation of the submitted task
@@ -915,10 +1044,25 @@ class App:
         
 
     def save_tasks_to_json(self):
+        # Prepare the path for saving tasks to JSON file
+        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"  # Updated path
+
         # Save the current tasks to a JSON file
-        with open("HCI project/task.json", "w") as f:
+        with open(path, "w") as f:
             json.dump(self.alltask, f, indent=4)
-        self.add_listbox()
+
+        try:
+            # Update the database with the new JSON file path in the json_task column
+            self.db_cursor.execute(
+                "UPDATE users SET json_task = %s WHERE username = %s",
+                (path, self.entered_username)
+            )
+            self.db_connection.commit()  # Commit the changes
+            print(f"Updated JSON path in database for user: {self.entered_username}")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Error: {err}")
+
+        self.add_listbox()  # Refresh the listbox or UI element as needed
         
 
 # Function to delete a task
@@ -936,8 +1080,11 @@ class App:
 
 
     def delete_task(self, category, task_title):
-        # Load existing tasks from task.json
-        with open('HCI project/task.json', 'r') as file:
+        # Prepare the path for loading existing tasks from the JSON file
+        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"  # Updated path for user-specific JSON
+
+        # Load existing tasks from the user's JSON file
+        with open(path, 'r') as file:
             tasks = json.load(file)
 
         # Remove the task from the tasks dictionary
@@ -945,8 +1092,8 @@ class App:
             task_info = tasks[category][task_title]  # Store task info before deletion
             del tasks[category][task_title]  # Delete the task
 
-            # Write the updated tasks back to task.json
-            with open('HCI project/task.json', 'w') as file:
+            # Write the updated tasks back to the user's JSON file
+            with open(path, 'w') as file:
                 json.dump(tasks, file, indent=4)
 
             # Archive the deleted task to archives.json
@@ -956,10 +1103,14 @@ class App:
             # Update the listbox
             self.add_listbox()
 
+
     def archive_task(self, category, task_title, task_info):
+        # Prepare the path for the archives file
+        archive_path = f'HCI project/json_files/{self.entered_username}_jsonarchive.json'  # You can also make this dynamic if needed
+
         # Load existing archives from archives.json
         try:
-            with open('HCI project/archives.json', 'r') as file:
+            with open(archive_path, 'r') as file:
                 archives = json.load(file)
         except FileNotFoundError:
             archives = {}
@@ -970,12 +1121,20 @@ class App:
         archives[category][task_title] = task_info  # Add the task info to the archives
 
         # Write the updated archives back to archives.json
-        with open('HCI project/archives.json', 'w') as file:
+        with open(archive_path, 'w') as file:
             json.dump(archives, file, indent=4)
-    
+
     def load_tasks(self):
-        with open('HCI project/task.json', 'r') as file:
-            self.data = json.load(file)
+        # Prepare the path for loading the user's tasks
+        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"  # Updated path for user-specific JSON
+
+        # Load tasks from the user's JSON file
+        try:
+            with open(path, 'r') as file:
+                self.data = json.load(file)
+        except FileNotFoundError:
+            self.data = {"Personal": {}, "Academic": {}}  # Initialize empty structure if file does not exist
+
             
     def show_sorter(self, event):
         self.load_tasks()

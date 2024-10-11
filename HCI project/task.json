@@ -1,11 +1,11 @@
 {
     "Personal": {
-        "Clean": {
-            "where": "asdadsd",
-            "description": "asdasdas",
-            "Due Date": "10/9/24 1:00 AM",
-            "Priority": "High",
-            "Status": "Overdue"
+        "Cook": {
+            "where": "asda",
+            "description": "dasa",
+            "Due Date": "10/10/24 1:00 AM",
+            "Priority": "Medium",
+            "Status": "Pending"
         }
     },
     "Academic": {}
