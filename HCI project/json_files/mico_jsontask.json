@@ -1,5 +1,13 @@
 {
-    "Personal": {},
+    "Personal": {
+        "Pay Bills": {
+            "where": "fsd",
+            "description": "sdf",
+            "Due Date": "10/12/24 1:00 AM",
+            "Priority": "High",
+            "Status": "Overdue"
+        }
+    },
     "Academic": {
         "Attend Class": {
             "subject": "History",
@@ -7,6 +15,13 @@
             "Due Date": "10/11/24 1:00 AM",
             "Priority": "High",
             "Status": "Overdue"
+        },
+        "Group Project Meeting": {
+            "subject": "xv",
+            "description": "cvx",
+            "Due Date": "10/12/24 1:00 AM",
+            "Priority": "High",
+            "Status": "Done"
         }
     }
 }

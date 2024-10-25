@@ -1,1 +1,12 @@
-{"Personal": {}, "Academic": {}}
+{
+    "Personal": {
+        "Clean": {
+            "where": "sda",
+            "description": "asd",
+            "Due Date": "10/11/24 1:00 AM",
+            "Priority": "Low",
+            "Status": "Pending"
+        }
+    },
+    "Academic": {}
+}

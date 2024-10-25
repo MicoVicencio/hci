@@ -271,6 +271,7 @@ class App:
         
     def Amainwindow(self):
         self.login_window.destroy()
+        self.category = "Academic"
         self.load_tasks()
         self.mainwindow = tk.Toplevel(self.root)
         self.mainwindow.geometry("1430x800")
@@ -328,26 +329,30 @@ class App:
         exit_button.image = ex_img
         exit_button.bind("<Button-1>", self.logout)  # You can bind to any function that closes the window
 
-        # Create frame for search bar and icon
-        searchFrame = tk.Frame(frontFrame, bg="white")
-        searchFrame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="w")
+        
+        button_canvas = tk.Canvas(frontFrame, bg="white", height=70, borderwidth=0, highlightthickness=0)
+        button_canvas.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
-        search = Image.open("HCI project/search.png").resize((40, 40), Image.LANCZOS)
-        searc = ImageTk.PhotoImage(search)
-        sear = tk.Label(searchFrame, image=searc, bg="white")
-        sear.pack(side="left", padx=5)
-        sear.image = searc
+        # Create a frame inside the canvas for buttons without a border
+        button_frame = tk.Frame(button_canvas, bg="white", borderwidth=0, relief="flat")
+        button_canvas.create_window((0, 0), window=button_frame, anchor='nw')
 
-        self.searchbar_placeholder = "Search Task"
-        self.searchBar = tk.Entry(searchFrame, width=50, font=("Arial", 20))
-        self.searchBar.insert(0, self.searchbar_placeholder)
-        self.searchBar.bind('<FocusIn>', self.on_entry_clickSearch)
-        self.searchBar.bind('<FocusOut>', self.on_focusoutSearch)
-        self.searchBar.pack(side="left", padx=5, ipady=10)
+        # Academic button
+        self.academic_button = tk.Button(button_frame, text="Academic", command=lambda: self.config_cat("Academic"), width=12, height=2)
+        self.academic_button.pack(side=tk.LEFT, padx=5)  # Use pack for side-by-side buttons
+
+        # Personal button
+        self.personal_button = tk.Button(button_frame, text="Personal", command=lambda: self.config_cat("Personal"), width=12, height=2)
+        self.personal_button.pack(side=tk.LEFT, padx=5)  # Use pack for side-by-side buttons
+
+        # Update the scroll region of the canvas
+        button_frame.update_idletasks()
+        button_canvas.config(scrollregion=button_canvas.bbox("all"))
+
 
         # Create result frame
         self.resultFrame = tk.Frame(frontFrame, bg="grey", borderwidth=2, relief="solid")
-        self.resultFrame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.resultFrame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
         self.resultFrame.grid_rowconfigure(0, weight=1)  # Make the inner frame expandable
         self.resultFrame.grid_columnconfigure(0, weight=1)
 
@@ -393,13 +398,103 @@ class App:
         add = Image.open("HCI project/add.png").resize((60, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add)
         add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.open_task_window)
-        add_button.grid(row=3, column=2, padx=10, pady=10, sticky="nsew")
+        add_button.grid(row=4, column=2, padx=10, pady=10, sticky="nsew")
         add_button.image = ad
 
         # Insert some sample data
         self.add_listbox()
         self.tree.bind("<ButtonRelease-1>", self.display_selected_task)
         self.start_monitoring()    
+        
+    def config_cat(self,category):
+        if category == 'Personal':
+            self.category = "Personal"
+        elif category == 'Academic':
+            self.category = "Academic"
+        else:
+            self.category = None
+        self.add_listbox()
+        
+    def add_listbox(self):
+        
+        
+        # Configure tags for the Treeview
+        self.tree.tag_configure('high_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('medium_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('low_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('done', background='#43A047', foreground='black', font=("Arial", 16))  # Tag for done tasks
+
+        try:
+            path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+            # Open the JSON file and load the data
+            with open(path, 'r') as json_file:
+                self.alltask = json.load(json_file)  # Load data into self.alltask
+                print("Tasks loaded successfully:", self.alltask)
+        except FileNotFoundError:
+            print("The file 'task.json' was not found.")
+            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
+        except json.JSONDecodeError:
+            print("Error decoding JSON from the file.")
+            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
+        except Exception as e:
+            print("An error occurred:", str(e))
+            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
+
+        # Clear the Treeview
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        def get_priority_tag(priority):
+            """Returns the appropriate tag based on priority."""
+            if priority.lower() == "high":
+                return 'high_priority'
+            elif priority.lower() == "medium":
+                return 'medium_priority'
+            elif priority.lower() == "low":
+                return 'low_priority'
+            else:
+                return ''  # No tag if priority is unknown
+
+        # Function to add tasks to the Treeview based on the specified category
+        def add_tasks(tasks, task_type):
+            for task_key, task_info in tasks.items():
+                task_title = task_key
+                priority = task_info.get("Priority", "N/A")  # Get priority, default to "N/A"
+                status = task_info.get("Status", "Pending")  # Get status, default to "Pending"
+                due_date = task_info.get("Due Date", "N/A")  # Get due date, default to "N/A"
+                tag = get_priority_tag(priority)  # Get the priority tag
+
+                # Add the done tag if status is "Done"
+                if status.lower() == "done":
+                    tag = 'done'  # Override tag to 'done' if the status is done
+
+                print(f"Adding {task_type} Task: {task_title}, Priority: {priority}, Status: {status}, Due Date: {due_date}")  # Debug print
+                # Insert the task into the Treeview with the appropriate tag
+                self.tree.insert("", tk.END, values=(task_title, priority, status, due_date, task_type), tags=(tag,))
+
+        # Check if 'Personal' category exists and loop through personal tasks if specified
+        if self.category == "Personal" or self.category is None:
+            if "Personal" in self.alltask:
+                add_tasks(self.alltask["Personal"], "Personal")
+                self.personal_button.config(fg='red')
+                self.academic_button.config(fg='black')
+                
+
+        # Check if 'Academic' category exists and loop through academic tasks if specified
+        if self.category == "Academic" or self.category is None:
+            if "Academic" in self.alltask:
+                add_tasks(self.alltask["Academic"], "Academic")
+                self.academic_button.config(fg='red')
+                self.personal_button.config(fg='black')
+
+        # Print a message if no tasks are found
+        if not self.tree.get_children():
+            print("No tasks found to display.")
+    
+        
+
+    time.sleep(1)
+        
         
     def logout(self,event):
         
@@ -561,90 +656,6 @@ class App:
     def search_on_enter(self, event):
         self.search()  # Call the search method
         
-    
-
-
-    def add_listbox(self):
-        self.tree.tag_configure('high_priority', background='#EF5350', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('medium_priority', background='#EF5350', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('low_priority', background='#EF5350', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('done', background='#43A047', foreground='black', font=("Arial", 16))  # Tag for done tasks
-
-        try:
-            path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
-            # Open the JSON file and load the data
-            with open(path, 'r') as json_file:
-                self.alltask = json.load(json_file)  # Load data into self.alltask
-                print("Tasks loaded successfully:", self.alltask)
-        except FileNotFoundError:
-            print("The file 'task.json' was not found.")
-            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
-        except json.JSONDecodeError:
-            print("Error decoding JSON from the file.")
-            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
-        except Exception as e:
-            print("An error occurred:", str(e))
-            self.alltask = {"Personal": {}, "Academic": {}}  # Initialize to prevent errors
-
-        # Clear the Treeview
-        for row in self.tree.get_children():
-            self.tree.delete(row)
-
-        def get_priority_tag(priority):
-            """Returns the appropriate tag based on priority."""
-            if priority.lower() == "high":
-                return 'high_priority'
-            elif priority.lower() == "medium":
-                return 'medium_priority'
-            elif priority.lower() == "low":
-                return 'low_priority'
-            else:
-                return ''  # No tag if priority is unknown
-
-        # Check if 'Personal' category exists and loop through personal tasks
-        if "Personal" in self.alltask:
-            for task_key, task_info in self.alltask["Personal"].items():
-                task_title = task_key
-                priority = task_info.get("Priority", "N/A")  # Get priority, default to "N/A"
-                status = task_info.get("Status", "Pending")      # Get status, default to "N/A"
-                due_date = task_info.get("Due Date", "N/A")  # Get due date, default to "N/A"
-                tag = get_priority_tag(priority)  # Get the priority tag
-
-                # Add the done tag if status is "Done"
-                if status.lower() == "done":
-                    tag = 'done'  # Override tag to 'done' if the status is done
-
-                print(f"Adding Personal Task: {task_title}, Priority: {priority}, Status: {status}, Due Date: {due_date}")  # Debug print
-                # Insert the task into the Treeview with the appropriate tag
-                self.tree.insert("", tk.END, values=(task_title, priority, status, due_date, "Personal"), tags=(tag,))
-
-        # Check if 'Academic' category exists and loop through academic tasks
-        if "Academic" in self.alltask:
-            for task_key, task_info in self.alltask["Academic"].items():
-                task_title = task_key
-                priority = task_info.get("Priority", "N/A")  # Get priority, default to "N/A"
-                status = task_info.get("Status", "Pending")      # Get status, default to "N/A"
-                due_date = task_info.get("Due Date", "N/A")  # Get due date, default to "N/A"
-                tag = get_priority_tag(priority)  # Get the priority tag
-
-                # Add the done tag if status is "Done"
-                if status.lower() == "done":
-                    tag = 'done'  # Override tag to 'done' if the status is done
-
-                print(f"Adding Academic Task: {task_title}, Priority: {priority}, Status: {status}, Due Date: {due_date}")  # Debug print
-                # Insert the task into the Treeview with the appropriate tag
-                self.tree.insert("", tk.END, values=(task_title, priority, status, due_date, "Academic"), tags=(tag,))
-
-        # Print a message if no tasks are found
-        if not self.tree.get_children():
-            print("No tasks found to display.")
-    time.sleep(1)
-
-
-
-
-
-
             
     def search(self):
         # Get the value from the search bar
@@ -949,6 +960,8 @@ class App:
         
     def display_selected_task(self, event):
         # Ensure something is selected
+        
+        
         selected_item = self.tree.selection()
         if not selected_item:
             return  # Exit if nothing is selected
@@ -1280,10 +1293,6 @@ class App:
         self.due_date_button.config(text=self.full_time)
         print(self.full_time)
 
-        
-        
-    
-        
         
     def get_category(self):
         self.selected_category = self.category.get()

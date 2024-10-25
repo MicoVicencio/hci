@@ -1,0 +1,18 @@
+{
+    "Personal": {
+        "Grocery Shopping": {
+            "where": "mall",
+            "description": "shopping make up",
+            "Due Date": "10/12/24 2:08 PM",
+            "Priority": "High",
+            "Status": "Pending"
+        },
+        "Cook": {
+            "where": "house",
+            "description": "adobo",
+            "Due Date": "10/12/24 2:08 PM",
+            "Priority": "Low",
+            "Status": "Overdue"
+        }
+    }
+}

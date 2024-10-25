@@ -1,0 +1,20 @@
+{
+    "Personal": {
+        "Clean": {
+            "where": "saddsadas",
+            "description": "dsadsasda",
+            "Due Date": "10/12/24 1:00 AM",
+            "Priority": "High",
+            "Status": "Pending"
+        }
+    },
+    "Academic": {
+        "": {
+            "subject": "History",
+            "description": "a",
+            "Due Date": "10/12/24 1:00 AM",
+            "Priority": "Low",
+            "Status": "Pending"
+        }
+    }
+}
