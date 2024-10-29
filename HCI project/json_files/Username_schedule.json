@@ -1,0 +1,30 @@
+{
+    "Monday": [
+        {
+            "day": "Monday",
+            "teacher": "Sir Bianan",
+            "subject": "HCI",
+            "room": "109",
+            "time": "1:30 PM"
+        },
+        {
+            "day": "Monday",
+            "teacher": "Sir Jeth",
+            "subject": "Web Dev",
+            "room": "108",
+            "time": "9:30 AM"
+        },
+        {
+            "day": "Monday",
+            "teacher": "Sir Andi",
+            "subject": "Analysis",
+            "room": "107",
+            "time": "4:30 PM"
+        }
+    ],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": [],
+    "Saturday": []
+}

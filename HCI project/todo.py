@@ -17,14 +17,18 @@ class App:
     def __init__(self, root):
         self.root = root
         self.connect_to_database()
-        
+        self.edit_cat = None
+        self.edit_task = None
         self.alltask = {}
         self.json_folder = 'HCI project/json_files'
         if not os.path.exists(self.json_folder):
             os.makedirs(self.json_folder)
             
         self.data = {}
-
+        self.selected_button = None  # Track the currently selected button
+        self.sched_teacher = []
+        self.sched_room = []
+        self.sched_subject = []
         # Call the main window setup
         
         self.root.title("Login")
@@ -287,6 +291,7 @@ class App:
         frontFrame.grid_rowconfigure(1, weight=0)  # For search bar
         frontFrame.grid_rowconfigure(2, weight=1)  # For resultFrame (expandable)
         frontFrame.grid_rowconfigure(3, weight=0)  # For add button
+        frontFrame.grid_rowconfigure(4, weight=0)  # For Class Schedule button
 
         # Load and resize the logo image
         logo = Image.open("HCI project/logo.png")
@@ -404,7 +409,12 @@ class App:
         # Insert some sample data
         self.add_listbox()
         self.tree.bind("<ButtonRelease-1>", self.display_selected_task)
-        self.start_monitoring()    
+        self.start_monitoring()
+
+        # Class Schedule Button
+        schedule_button = tk.Button(frontFrame, text="Class Schedule", font=("Helvetica", 14), command=self.scheduleMainwindow, width=15, height=2, bg="#5B5DA8", fg="white")
+        schedule_button.grid(row=4, column=0, padx=10, pady=10, sticky="nw")  # Align to the left corner
+  
         
     def config_cat(self,category):
         if category == 'Personal':
@@ -415,6 +425,9 @@ class App:
             self.category = None
         self.add_listbox()
         
+    
+
+
     def add_listbox(self):
         
         
@@ -808,7 +821,7 @@ class App:
         self.low_priority.grid(row=5, column=1, padx=10, pady=5, sticky='w')
 
         # Submit Button
-        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=self.submit_task, font=('Arial', 12), width=20)
+        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=lambda:self.submit_task('a'), font=('Arial', 12), width=20)
         self.submit_button.grid(row=6, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
 
         # Make the layout more spacious
@@ -864,7 +877,7 @@ class App:
         self.low_priority.grid(row=5, column=1, padx=10, pady=5, sticky='w')
 
         # Submit Button
-        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=self.submit_task, font=('Arial', 12), width=20)
+        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=lambda:self.submit_task('a'), font=('Arial', 12), width=20)
         self.submit_button.grid(row=6, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
 
         # Make the layout more spacious
@@ -884,30 +897,48 @@ class App:
             
     
         
-    def submit_task(self):
+    def submit_task(self, cat):
+        # Initialize subname
+        subname = ""
+
         # Get the category and task prefix from the combo boxes
-        sub = self.task_combo.get().strip()
-        category = self.category_combo.get()
+        if self.edit_cat is not None:
+                subname = self.edit_task  # Use the existing task title when editing
+                category = self.edit_cat
+        else:
+                sub = self.task_combo.get().strip()  # Get the new task title
+                category = self.category_combo.get()  # Get the selected category
+
+                # Count existing tasks with the same prefix in the selected category
+                priority = self.priority_var.get()  # Get the selected priority from radio buttons
+
+                # File name for storing tasks
+                path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+
+                # Load existing tasks or initialize an empty dictionary
+                if os.path.exists(path):
+                        with open(path, 'r') as json_file:
+                                all_tasks = json.load(json_file)
+                else:
+                        all_tasks = {"Personal": {}, "Academic": {}}  # Ensure these keys match consistently
+
+                # Count existing tasks with the same prefix in the selected category
+                chosen = all_tasks.get(category, {})
+                number = sum(1 for key in chosen.keys() if key.startswith(sub))
+
+                # Create a unique subname for the new task
+                subname = f"{sub}{number}" if number > 0 else sub
 
         # Get priority
         priority = self.priority_var.get()  # Get the selected priority from radio buttons
 
-        # File name for storing tasks
+        # Ensure the JSON file path is set up
         path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
-
-        # Load existing tasks or initialize an empty dictionary
-        if os.path.exists(path):
+        if not os.path.exists(path):
+                all_tasks = {"Personal": {}, "Academic": {}}  # Initialize if file does not exist
+        else:
                 with open(path, 'r') as json_file:
                         all_tasks = json.load(json_file)
-        else:
-                all_tasks = {"Personal": {}, "Academic": {}}  # Ensure these keys match consistently
-
-        # Count existing tasks with the same prefix in the selected category
-        chosen = all_tasks.get(category, {})
-        number = sum(1 for key in chosen.keys() if key.startswith(sub))
-
-        # Create a unique subname for the new task
-        subname = f"{sub}{number}" if number > 0 else sub
 
         # Determine the correct category and handle both personal and academic tasks
         if category == "Personal":
@@ -925,7 +956,7 @@ class App:
                         "Status": "Pending"
                 }
 
-                # Add the new personal task to the all_tasks dictionary
+                # Add or update the personal task in the all_tasks dictionary
                 all_tasks["Personal"][subname] = task_info
 
         elif category == "Academic":
@@ -940,10 +971,10 @@ class App:
                         "description": description,
                         "Due Date": due_date,
                         "Priority": priority,
-                        "Status": "Pending" # Include priority
+                        "Status": "Pending"  # Include priority
                 }
 
-                # Add the new academic task to the all_tasks dictionary
+                # Add or update the academic task in the all_tasks dictionary
                 all_tasks["Academic"][subname] = task_info
 
         # Save the updated all_tasks dictionary to the JSON file
@@ -952,16 +983,27 @@ class App:
 
         # Print confirmation of the submitted task
         print(f"Task Submitted: {task_info} in {category} category under key: {subname}")
+        
+        if self.edit_cat is None:
+                self.task_chooser.destroy()
+
+        # Reset editing variables and close windows
+        self.edit_cat = None
+        self.edit_task = None
         self.subcategory_window.destroy()
-        self.task_chooser.destroy()
-        self.add_listbox()
+        self.details_window.destroy()
+
+        if self.edit_cat:
+                self.task_chooser.destroy()
+        
+        self.add_listbox()  # Update the task list display
+
+
 
 
         
     def display_selected_task(self, event):
         # Ensure something is selected
-        
-        
         selected_item = self.tree.selection()
         if not selected_item:
             return  # Exit if nothing is selected
@@ -1013,12 +1055,13 @@ class App:
             context_text.insert(tk.END, task_info["context"])
             context_text.config(state=tk.DISABLED)  # Make it read-only
 
-        # Create the "Mark as Done" button
+        # Create the frame for buttons
         mark_done_frame = tk.Frame(self.details_window)
         mark_done_frame.pack(pady=10, anchor="center")  # Pack the frame and center it
 
         # Mark as Done button
-        mark_done_button = tk.Button(mark_done_frame, text="Mark as Done", font=("Arial", 16), command=lambda: self.mark_task_as_done(category, task_title, selected_item), fg="#518D45")
+        mark_done_button = tk.Button(mark_done_frame, text="Mark as Done", font=("Arial", 16), 
+                                      command=lambda: self.mark_task_as_done(category, task_title, selected_item), fg="#518D45")
         mark_done_button.pack(side="left", padx=10)  # Pack the button to the left with padding
 
         # Load and resize the delete image
@@ -1033,6 +1076,148 @@ class App:
 
         # Bind the delete image click to the delete_task method
         delete_label.bind("<Button-1>", lambda e: self.delete_task(category, task_title))
+
+        # Load and resize the edit image
+        edit_image = Image.open("HCI project/edit.png")  # Update with the correct path
+        edit_image = edit_image.resize((50, 50), Image.LANCZOS)
+        edit_photo = ImageTk.PhotoImage(edit_image)
+
+        # Create a label to display the edit image
+        edit_label = tk.Label(mark_done_frame, image=edit_photo)
+        edit_label.image = edit_photo  # Keep a reference to the image
+        edit_label.pack(side="left", padx=10)  # Pack the label to the left with padding
+        
+        # Bind the edit image click to the edit_task method
+        self.edit_cat = category
+        self.edit_task = task_title
+        edit_label.bind("<Button-1>", lambda e: self.edit_choose(category))
+    
+    def edit_choose(self,cate):
+        if cate == 'Personal':
+            self.Edit_open_personal_task_window()
+        elif cate == "Academic":
+            self.Edit_open_academic_task_window()
+        
+    def Edit_open_academic_task_window(self):
+        self.subcategory_window = tk.Toplevel(self.root)
+        self.subcategory_window.title("Task Subcategory")
+
+        # Set a larger size for the window
+        self.subcategory_window.geometry("400x400")  # Increased height to accommodate radio buttons
+
+        # Subject Label
+        self.subject_label = tk.Label(self.subcategory_window, text="Subject:", font=('Arial', 12))
+        self.subject_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')  # Align to the west
+        
+        # Subjects for ComboBox
+        subjects = ["Mathematics", "Science", "History", "English", "Computer Science", "Art"]
+
+        # Subject ComboBox
+        self.subject_combobox = ttk.Combobox(self.subcategory_window, values=subjects, font=('Arial', 12), width=28)
+        self.subject_combobox.grid(row=0, column=1, padx=10, pady=10)
+
+        # Description Entry
+        self.description_label = tk.Label(self.subcategory_window, text="Description:", font=('Arial', 12))
+        self.description_label.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+        self.description_entry = tk.Text(self.subcategory_window, height=5, width=30, font=('Arial', 12))
+        self.description_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Due Date Label
+        self.due_date_label = tk.Label(self.subcategory_window, text="Due Date:", font=('Arial', 12))
+        self.due_date_label.grid(row=2, column=0, padx=10, pady=10, sticky='w')
+
+        # Due Date Button
+        self.due_date_button = tk.Button(self.subcategory_window, text="Select Due Date", command=self.showCalendar, font=('Arial', 12), width=20)
+        self.due_date_button.grid(row=2, column=1, padx=10, pady=10)
+
+        # Priority Label
+        self.priority_label = tk.Label(self.subcategory_window, text="Priority:", font=('Arial', 12))
+        self.priority_label.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+
+        # Variable to hold priority selection
+        self.priority_var = tk.StringVar(value="Medium")  # Default value
+
+        # Radio Buttons for Priority
+        self.high_priority = tk.Radiobutton(self.subcategory_window, text="High", variable=self.priority_var, value="High", font=('Arial', 12))
+        self.high_priority.grid(row=3, column=1, padx=10, pady=5, sticky='w')
+
+        self.medium_priority = tk.Radiobutton(self.subcategory_window, text="Medium", variable=self.priority_var, value="Medium", font=('Arial', 12))
+        self.medium_priority.grid(row=4, column=1, padx=10, pady=5, sticky='w')
+
+        self.low_priority = tk.Radiobutton(self.subcategory_window, text="Low", variable=self.priority_var, value="Low", font=('Arial', 12))
+        self.low_priority.grid(row=5, column=1, padx=10, pady=5, sticky='w')
+
+        # Submit Button
+        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=lambda:self.submit_task('edit'), font=('Arial', 12), width=20)
+        self.submit_button.grid(row=6, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
+
+        # Make the layout more spacious
+        for i in range(7):
+                self.subcategory_window.grid_rowconfigure(i, weight=1)
+        for j in range(2):
+                self.subcategory_window.grid_columnconfigure(j, weight=1)  
+                
+    def Edit_open_personal_task_window(self):
+        self.subcategory_window = tk.Toplevel(self.root)
+        self.subcategory_window.title("Personal Task")
+
+        # Set a larger size for the window
+        self.subcategory_window.geometry("400x400")  # Increased height to accommodate radio buttons
+
+        # Personal Task Selection (using an Entry)
+        self.task_label = tk.Label(self.subcategory_window, text="Where:", font=('Arial', 12))
+        self.task_label.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+
+        # Where Entry
+        self.where_entry = tk.Entry(self.subcategory_window, font=('Arial', 12), width=30)
+        self.where_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        # Description Entry
+        self.description_label = tk.Label(self.subcategory_window, text="Description:", font=('Arial', 12))
+        self.description_label.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+        self.description_entry = tk.Text(self.subcategory_window, height=5, width=30, font=('Arial', 12))
+        self.description_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Due Date Label
+        self.due_date_label = tk.Label(self.subcategory_window, text="Due Date:", font=('Arial', 12))
+        self.due_date_label.grid(row=2, column=0, padx=10, pady=10, sticky='w')
+
+        # Due Date Button
+        self.due_date_button = tk.Button(self.subcategory_window, text="Select Due Date", command=self.showCalendar, font=('Arial', 12), width=20)
+        self.due_date_button.grid(row=2, column=1, padx=10, pady=10)
+
+        # Priority Label
+        self.priority_label = tk.Label(self.subcategory_window, text="Priority:", font=('Arial', 12))
+        self.priority_label.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+
+        # Variable to hold priority selection
+        self.priority_var = tk.StringVar(value="Medium")  # Default value
+
+        # Radio Buttons for Priority
+        self.high_priority = tk.Radiobutton(self.subcategory_window, text="High", variable=self.priority_var, value="High", font=('Arial', 12))
+        self.high_priority.grid(row=3, column=1, padx=10, pady=5, sticky='w')
+
+        self.medium_priority = tk.Radiobutton(self.subcategory_window, text="Medium", variable=self.priority_var, value="Medium", font=('Arial', 12))
+        self.medium_priority.grid(row=4, column=1, padx=10, pady=5, sticky='w')
+
+        self.low_priority = tk.Radiobutton(self.subcategory_window, text="Low", variable=self.priority_var, value="Low", font=('Arial', 12))
+        self.low_priority.grid(row=5, column=1, padx=10, pady=5, sticky='w')
+
+        # Submit Button
+        self.submit_button = tk.Button(self.subcategory_window, text="Submit", command=lambda:self.submit_task('a'), font=('Arial', 12), width=20)
+        self.submit_button.grid(row=6, column=1, padx=10, pady=20, sticky='ew')  # Align with Due Date Button
+
+        # Make the layout more spacious
+        for i in range(7):
+                self.subcategory_window.grid_rowconfigure(i, weight=1)
+        for j in range(2):
+                self.subcategory_window.grid_columnconfigure(j, weight=1)  
+    
+    
+    
+
+
+
 
 # Function to mark a task as done
     def mark_task_as_done(self, category, task_title, selected_item):
@@ -1316,7 +1501,300 @@ class App:
         if self.duedate_entry.get() == '':
             self.duedate_entry.insert(0, self.due)
             self.duedate_entry.config(fg='#518D45')
+    
+    def scheduleMainwindow(self):
+        self.Smainwindow = tk.Toplevel(self.root)
+        self.Smainwindow.geometry("1430x800")
+        self.Smainwindow.title("Class Schedule Planner")
+
+        # Create the main frame
+        frontFrame = tk.Frame(self.Smainwindow, bg="white")
+        frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # Configure grid for the main frame
+        frontFrame.grid_columnconfigure(0, weight=1)  # For logo
+        frontFrame.grid_columnconfigure(1, weight=3)  # For title
+        frontFrame.grid_columnconfigure(2, weight=1)  # For bell and history icons
+        frontFrame.grid_rowconfigure(0, weight=0)  # For title and logo
+        frontFrame.grid_rowconfigure(1, weight=0)  # For search bar
+        frontFrame.grid_rowconfigure(2, weight=1)  # For resultFrame (expandable)
+        frontFrame.grid_rowconfigure(3, weight=0)  # For add button row
+
+        # Load and resize the logo image
+        logo = Image.open("HCI project/logo.png").resize((190, 130), Image.LANCZOS)
+        img = ImageTk.PhotoImage(logo)
+        log = tk.Label(frontFrame, image=img, bg="white")
+        log.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
+        log.image = img
+
+        # Title label for the app
+        todotitle = tk.Label(frontFrame, text="Class Schedule Planner", font=("Times", 50), bg="white", fg="#5B5DA8")
+        todotitle.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
+
+        # Add buttons for each day from Monday to Saturday independently
+        self.day_buttons = []
+        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        day_frame = tk.Frame(frontFrame, bg="white")
+        day_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+
+        for day in days:
+            day_button = tk.Button(day_frame, text=day, width=12, height=2,
+                                    command=lambda d=day: self.load_and_display_schedules(d))
+            day_button.pack(side=tk.LEFT, padx=5)
+            self.day_buttons.append(day_button)
+
+        # Create result frame
+        self.resultFrame = tk.Frame(frontFrame, bg="grey", borderwidth=2, relief="solid")
+        self.resultFrame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.resultFrame.grid_rowconfigure(0, weight=1)  # Make the inner frame expandable
+        self.resultFrame.grid_columnconfigure(0, weight=1)
+
+        # Scrollbar for Treeview
+        scrollbar = tk.Scrollbar(self.resultFrame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Create and configure the Treeview widget
+        style = ttk.Style()
+        style.configure("Custom.Treeview", font=("Helvetica", 12))
+        style.configure("Custom.Treeview.Heading", font=("Helvetica", 17, "bold"))
+
+        # Create the Treeview widget with specified columns
+        self.Stree = ttk.Treeview(
+            self.resultFrame, columns=("Room Number", "Teacher", "Subject", "Time"),
+            show='headings', height=15
+        )
+        self.Stree.heading("Room Number", text="Room Number")
+        self.Stree.heading("Teacher", text="Teacher")
+        self.Stree.heading("Subject", text="Subject")
+        self.Stree.heading("Time", text="Time")
+
+        # Configure the columns' width and alignment
+        self.Stree.column("Room Number", width=150, anchor="center")
+        self.Stree.column("Teacher", width=200, anchor="center")
+        self.Stree.column("Subject", width=200, anchor="center")
+        self.Stree.column("Time", width=150, anchor="center")
+
+        # Apply the style to the Treeview and pack it into the frame
+        self.Stree.configure(style="Custom.Treeview")
+        self.Stree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Configure Treeview row height and styles
+        style.configure("Treeview", rowheight=40)
+        style.configure("Treeview.Heading", font=("Arial", 16))
+        self.Stree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.Stree.yview)
+        self.Stree.config(yscrollcommand=scrollbar.set)
+
+        # Create a frame for buttons at the bottom
+        buttons_frame = tk.Frame(frontFrame, bg="white")
+        buttons_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10)
+
+        # Add Teacher Button
+        add_teacher_button = tk.Button(buttons_frame, text="Add Teacher", font=("Helvetica", 14), width=15, height=2, bg="#5B5DA8", fg="white", command=self.open_teacher_window)
+        add_teacher_button.grid(row=0, column=0, padx=5, pady=5)
+
+        # Add Subject Button
+        add_subject_button = tk.Button(buttons_frame, text="Add Subject", font=("Helvetica", 14), width=15, height=2, bg="#5B5DA8", fg="white", command=self.open_subject_window)
+        add_subject_button.grid(row=0, column=1, padx=5, pady=5)
+
+        # Add Room Number Button
+        add_room_button = tk.Button(buttons_frame, text="Add Room Number", font=("Helvetica", 14), width=15, height=2, bg="#5B5DA8", fg="white", command=self.open_room_window)
+        add_room_button.grid(row=0, column=2, padx=5, pady=5)
+
+        # Add Button
+        add_image = Image.open("HCI project/add.png").resize((60, 60), Image.LANCZOS)
+        ad = ImageTk.PhotoImage(add_image)
+        add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.AddSchedule)
+        add_button.grid(row=4, column=2, padx=10, pady=10, sticky="nsew")
+        add_button.image = ad
+
+        # Load the schedules for the default day (Monday)
+        self.load_and_display_schedules("Monday")
+
+    def load_and_display_schedules(self, day):
+        # Reset the foreground color for all buttons
+        for button in self.day_buttons:
+            button.config(fg="black")  # Reset to black for unselected buttons
+
+        # Change the foreground color of the selected button
+        current_button = self.day_buttons[["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].index(day)]
+        current_button.config(fg="blue")  # Change color to blue for the selected button
+
+        # File path for retrieving schedules
+        path = f"HCI project/json_files/{self.entered_username}_schedule.json"
+
+        # Check if the file exists
+        if os.path.exists(path):
+            with open(path, 'r') as json_file:
+                self.schedule_data = json.load(json_file)  # Load all schedules into memory
+
+            # Clear existing entries in the Treeview
+            for row in self.Stree.get_children():
+                self.Stree.delete(row)
+
+            # Get schedules for the selected day
+            schedules = self.schedule_data.get(day, [])
+            
+            # Insert the schedules into the Treeview
+            for schedule in schedules:
+                self.Stree.insert("", "end", values=(schedule['room'], schedule['teacher'], schedule['subject'], schedule['time']))
+        else:
+            print("No schedule file found.")
+    
+    
+    def AddSchedule(self):
+        # Create the Add Schedule window
+        self.scheduleWindow = tk.Toplevel(self.root)
+        self.scheduleWindow.geometry("800x700")  # Increased window size
+        self.scheduleWindow.title("Add Schedule")
+
+        # Label at the top
+        title_label = tk.Label(self.scheduleWindow, text="Add Schedule", font=("Helvetica", 20))
+        title_label.pack(pady=20)
+
+        # ComboBox for Day selection
+        day_label = tk.Label(self.scheduleWindow, text="Day:", font=("Helvetica", 16))
+        day_label.pack(pady=10)
+        self.day_combobox = ttk.Combobox(self.scheduleWindow, values=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], width=40, font=("Helvetica", 14))
+        self.day_combobox.pack(pady=10)
+
+        # Teacher ComboBox
+        teacher_label = tk.Label(self.scheduleWindow, text="Select Teacher:", font=("Helvetica", 16))
+        teacher_label.pack(pady=10)
+        self.sched_teacher = ttk.Combobox(self.scheduleWindow, values=self.sched_teacher, width=40, font=("Helvetica", 14))  # Use sample data
+        self.sched_teacher.pack(pady=10)
+
+        # Subject ComboBox
+        subject_label = tk.Label(self.scheduleWindow, text="Select Subject:", font=("Helvetica", 16))
+        subject_label.pack(pady=10)
+        self.sched_subject = ttk.Combobox(self.scheduleWindow, values=self.sched_subject, width=40, font=("Helvetica", 14))  # Use sample data
+        self.sched_subject.pack(pady=10)
+
+        # Room ComboBox
+        room_label = tk.Label(self.scheduleWindow, text="Select Room:", font=("Helvetica", 16))
+        room_label.pack(pady=10)
+        self.sched_room = ttk.Combobox(self.scheduleWindow, values=self.sched_room, width=40, font=("Helvetica", 14))  # Use sample data
+        self.sched_room.pack(pady=10)
+
+        # Time selection frame
+        self.time_frame = tk.Frame(self.scheduleWindow)
+        self.time_frame.pack(pady=20)
+
+        # Time Label
+        time_label = tk.Label(self.time_frame, text="Select Time:", font=("Helvetica", 16))
+        time_label.grid(row=0, column=0, columnspan=6, pady=10)
+
+        # Hour Spinbox (1 to 12)
+        hour_label = tk.Label(self.time_frame, text="Hour:", font=("Helvetica", 14))
+        hour_label.grid(row=1, column=0)
+        self.Shour_spinbox = tk.Spinbox(self.time_frame, from_=1, to=12, width=5, font=("Helvetica", 14))
+        self.Shour_spinbox.grid(row=1, column=1, padx=10)
+
+        # Minute Spinbox (0 to 59)
+        minute_label = tk.Label(self.time_frame, text="Minute:", font=("Helvetica", 14))
+        minute_label.grid(row=1, column=2)
+        self.Sminute_spinbox = tk.Spinbox(self.time_frame, from_=0, to=59, width=5, font=("Helvetica", 14))
+        self.Sminute_spinbox.grid(row=1, column=3, padx=10)
+
+        # AM/PM Combobox
+        ampm_label = tk.Label(self.time_frame, text="AM/PM:", font=("Helvetica", 14))
+        ampm_label.grid(row=1, column=4)
+        self.Sampm_combobox = ttk.Combobox(self.time_frame, values=["AM", "PM"], width=8, font=("Helvetica", 14))
+        self.Sampm_combobox.grid(row=1, column=5, padx=10)
+        self.Sampm_combobox.current(0)  # Default to AM
+
+        # Submit button
+        submit_button = tk.Button(self.scheduleWindow, text="Submit", command=self.submit_schedule, font=("Helvetica", 14))
+        submit_button.pack(pady=20)
+
         
+    def submit_schedule(self):
+        # Get values from combo boxes and spinboxes
+        day = self.day_combobox.get()
+        teacher = self.sched_teacher.get()
+        subject = self.sched_subject.get()
+        room = self.sched_room.get()
+        hour = self.Shour_spinbox.get()
+        minute = self.Sminute_spinbox.get()
+        ampm = self.Sampm_combobox.get()
+
+        # Process the schedule data
+        print(f"Schedule: {day}, {teacher}, {subject}, Room {room} at {hour}:{minute} {ampm}")
+
+        # Prepare the schedule data
+        schedule_info = {
+            "day": day,
+            "teacher": teacher,
+            "subject": subject,
+            "room": room,
+            "time": f"{hour}:{minute} {ampm}",
+        }
+
+        # File path for storing schedules
+        path = f"HCI project/json_files/{self.entered_username}_schedule.json"
+
+        # Load existing schedules or initialize a new dictionary
+        if os.path.exists(path):
+            with open(path, 'r') as json_file:
+                all_schedules = json.load(json_file)
+        else:
+            # Initialize with days from Monday to Saturday
+            all_schedules = {
+                "Monday": [],
+                "Tuesday": [],
+                "Wednesday": [],
+                "Thursday": [],
+                "Friday": [],
+                "Saturday": [],
+            }
+
+        # Append the new schedule info to the appropriate day
+        if day in all_schedules:
+            all_schedules[day].append(schedule_info)
+
+        # Save the updated all_schedules dictionary to the JSON file
+        with open(path, 'w') as json_file:
+            json.dump(all_schedules, json_file, indent=4)
+
+        # Close the schedule window
+        self.scheduleWindow.destroy()
+    
+    def open_teacher_window(self):
+        self.create_toplevel_window("Add Teachers", self.convert_teacher_to_combo)
+
+    def open_room_window(self):
+        self.create_toplevel_window("Add Room Numbers", self.convert_room_to_combo)
+
+    def open_subject_window(self):
+        self.create_toplevel_window("Add Subjects", self.convert_subject_to_combo)
+
+    def create_toplevel_window(self, title, convert_function):
+        # Create a Toplevel window
+        top_window = tk.Toplevel(self.root)
+        top_window.title(title)
+
+        # Multi-line text box for input
+        text_box = tk.Text(top_window, width=50, height=10, font=("Helvetica", 14))  # Increased size and font
+        text_box.pack(pady=15)
+
+        # Button to convert text to values and store them
+        convert_button = tk.Button(top_window, text="Convert to Values", command=lambda: convert_function(text_box), font=("Helvetica", 14))  # Increased font size
+        convert_button.pack(pady=10)
+
+    def convert_teacher_to_combo(self, text_box):
+        items = text_box.get("1.0", tk.END).strip().split("\n")
+        self.sched_teacher = items  # Store in class attribute
+        text_box.delete("1.0", tk.END)  # Clear the text box after conversion
+
+    def convert_room_to_combo(self, text_box):
+        items = text_box.get("1.0", tk.END).strip().split("\n")
+        self.sched_room = items  # Store in class attribute
+        text_box.delete("1.0", tk.END)  # Clear the text box after conversion
+
+    def convert_subject_to_combo(self, text_box):
+        items = text_box.get("1.0", tk.END).strip().split("\n")
+        self.sched_subject = items  # Store in class attribute
+        text_box.delete("1.0", tk.END)  # Clear the text box after conversion
 
 
 root = tk.Tk()
