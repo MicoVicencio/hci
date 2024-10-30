@@ -2,29 +2,116 @@
     "Monday": [
         {
             "day": "Monday",
-            "teacher": "Sir Bianan",
-            "subject": "HCI",
-            "room": "109",
-            "time": "1:30 PM"
+            "teacher": "fds",
+            "subject": "sdf",
+            "room": "sdf",
+            "time_in": "2:0 AM",
+            "time_out": "1:0 AM"
         },
         {
             "day": "Monday",
-            "teacher": "Sir Jeth",
-            "subject": "Web Dev",
-            "room": "108",
-            "time": "9:30 AM"
+            "teacher": "ads",
+            "subject": "asd",
+            "room": "asd",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
         },
         {
             "day": "Monday",
-            "teacher": "Sir Andi",
-            "subject": "Analysis",
-            "room": "107",
-            "time": "4:30 PM"
+            "teacher": "dsaa",
+            "subject": "asd",
+            "room": "1213",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
+        },
+        {
+            "day": "Monday",
+            "teacher": "tttt",
+            "subject": "asd",
+            "room": "1213",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
+        },
+        {
+            "day": "Monday",
+            "teacher": "tttt",
+            "subject": "asd",
+            "room": "1213",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
+        },
+        {
+            "day": "Monday",
+            "teacher": "ffff",
+            "subject": "asd",
+            "room": "1213",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
+        },
+        {
+            "day": "Monday",
+            "teacher": "mico",
+            "subject": "asd",
+            "room": "1213",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
         }
     ],
     "Tuesday": [],
     "Wednesday": [],
     "Thursday": [],
     "Friday": [],
-    "Saturday": []
+    "Saturday": [
+        {
+            "day": "Saturday",
+            "teacher": "dsaa",
+            "subject": "asd",
+            "room": "1213",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
+        }
+    ],
+    "Rooms": [
+        [
+            "1213"
+        ],
+        [
+            "109",
+            "108",
+            "107",
+            "106"
+        ],
+        [
+            "107",
+            "108",
+            "1213",
+            "106",
+            "109",
+            "comlab"
+        ]
+    ],
+    "Teachers": [
+        [
+            "Mico",
+            "bianan",
+            "andi"
+        ]
+    ],
+    "Subjects": [
+        [
+            "asd"
+        ],
+        [
+            "tol"
+        ],
+        [
+            "tol"
+        ],
+        [
+            "asd",
+            "tol",
+            "hci",
+            "mariwana"
+        ]
+    ]
 }

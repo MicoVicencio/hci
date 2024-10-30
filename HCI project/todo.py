@@ -20,7 +20,7 @@ class App:
         self.edit_cat = None
         self.edit_task = None
         self.alltask = {}
-        self.json_folder = 'HCI project/json_files'
+        self.json_folder = 'json_files'
         if not os.path.exists(self.json_folder):
             os.makedirs(self.json_folder)
             
@@ -41,7 +41,7 @@ class App:
 
 
         # Load image
-        imgPath = r"C:\Users\micov\OneDrive\Desktop\HCI project\face.png"
+        imgPath = "face.png"
         img = Image.open(imgPath)
         new_size = (120, 100)  # Specify the new size (width, height)
         img_resized = img.resize(new_size, Image.LANCZOS)
@@ -294,7 +294,7 @@ class App:
         frontFrame.grid_rowconfigure(4, weight=0)  # For Class Schedule button
 
         # Load and resize the logo image
-        logo = Image.open("HCI project/logo.png")
+        logo = Image.open("logo.png")
         logo = logo.resize((190, 130), Image.LANCZOS)
         img = ImageTk.PhotoImage(logo)
 
@@ -312,14 +312,14 @@ class App:
         bell_history_frame.grid(row=0, column=2, padx=10, pady=10, sticky="ne")
 
         # Load and place bell and history images
-        bell = Image.open("HCI project/bell.png").resize((70, 60), Image.LANCZOS)
+        bell = Image.open("bell.png").resize((70, 60), Image.LANCZOS)
         bel = ImageTk.PhotoImage(bell)
         be = tk.Label(bell_history_frame, image=bel, bg="white")
         be.pack(side="left", padx=5)
         be.image = bel
         be.bind("<Button-1>", self.show_sorter)
 
-        history_img = Image.open("HCI project/history.png").resize((70, 60), Image.LANCZOS)
+        history_img = Image.open("history.png").resize((70, 60), Image.LANCZOS)
         hist_img = ImageTk.PhotoImage(history_img)
         history_button = tk.Label(bell_history_frame, image=hist_img, bg="white")
         history_button.pack(side="left", padx=5)
@@ -327,7 +327,7 @@ class App:
         history_button.bind("<Button-1>", self.open_history_window)
         
          # Load and place the exit image
-        exit_img = Image.open("HCI project/exit.png").resize((70, 60), Image.LANCZOS)
+        exit_img = Image.open("exit.png").resize((70, 60), Image.LANCZOS)
         ex_img = ImageTk.PhotoImage(exit_img)
         exit_button = tk.Label(bell_history_frame, image=ex_img, bg="white")
         exit_button.pack(side="left", padx=5)
@@ -400,7 +400,7 @@ class App:
         self.tree.config(yscrollcommand=scrollbar.set)
 
         # Add Button
-        add = Image.open("HCI project/add.png").resize((60, 60), Image.LANCZOS)
+        add = Image.open("add.png").resize((60, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add)
         add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.open_task_window)
         add_button.grid(row=4, column=2, padx=10, pady=10, sticky="nsew")
@@ -438,7 +438,7 @@ class App:
         self.tree.tag_configure('done', background='#43A047', foreground='black', font=("Arial", 16))  # Tag for done tasks
 
         try:
-            path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+            path = f"json_files/{self.entered_username}_jsontask.json"
             # Open the JSON file and load the data
             with open(path, 'r') as json_file:
                 self.alltask = json.load(json_file)  # Load data into self.alltask
@@ -551,7 +551,7 @@ class App:
              
     def save_tasks(self):
         """Save the updated tasks to the JSON file."""
-        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+        path = f"json_files/{self.entered_username}_jsontask.json"
         
         with open(path, 'w') as file:
             json.dump(self.data, file, indent=4)
@@ -598,7 +598,7 @@ class App:
         self.load_history()
 
     def load_history(self):
-      path = f"HCI project/json_files/{self.entered_username}_jsonarchive.json"
+      path = f"json_files/{self.entered_username}_jsonarchive.json"
       if os.path.exists(path):
         with open(path, 'r') as file:
             history = json.load(file)
@@ -630,7 +630,7 @@ class App:
 
             # Load existing archives from archives.json
             try:
-                path = f"HCI project/json_files/{self.entered_username}_jsonarchive.json"
+                path = f"json_files/{self.entered_username}_jsonarchive.json"
                 with open(path, 'r') as file:
                     archives = json.load(file)
             except FileNotFoundError:
@@ -650,7 +650,7 @@ class App:
 
             if archive_task_found:
                 # Save the updated archives back to archives.json
-                path = f"HCI project/json_files/{self.entered_username}_jsonarchive.json"
+                path = f"json_files/{self.entered_username}_jsonarchive.json"
                 with open(path, 'w') as file:
                     json.dump(archives, file, indent=4)
                 messagebox.showinfo("Task Deleted", f"The task '{task_to_delete}' has been deleted from archives.")
@@ -913,7 +913,7 @@ class App:
                 priority = self.priority_var.get()  # Get the selected priority from radio buttons
 
                 # File name for storing tasks
-                path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+                path = f"json_files/{self.entered_username}_jsontask.json"
 
                 # Load existing tasks or initialize an empty dictionary
                 if os.path.exists(path):
@@ -933,7 +933,7 @@ class App:
         priority = self.priority_var.get()  # Get the selected priority from radio buttons
 
         # Ensure the JSON file path is set up
-        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"
+        path = f"json_files/{self.entered_username}_jsontask.json"
         if not os.path.exists(path):
                 all_tasks = {"Personal": {}, "Academic": {}}  # Initialize if file does not exist
         else:
@@ -1065,7 +1065,7 @@ class App:
         mark_done_button.pack(side="left", padx=10)  # Pack the button to the left with padding
 
         # Load and resize the delete image
-        delete_image = Image.open("HCI project/delete.png")  # Update with the correct path
+        delete_image = Image.open("delete.png")  # Update with the correct path
         delete_image = delete_image.resize((50, 50), Image.LANCZOS)
         delete_photo = ImageTk.PhotoImage(delete_image)
 
@@ -1078,7 +1078,7 @@ class App:
         delete_label.bind("<Button-1>", lambda e: self.delete_task(category, task_title))
 
         # Load and resize the edit image
-        edit_image = Image.open("HCI project/edit.png")  # Update with the correct path
+        edit_image = Image.open("edit.png")  # Update with the correct path
         edit_image = edit_image.resize((50, 50), Image.LANCZOS)
         edit_photo = ImageTk.PhotoImage(edit_image)
 
@@ -1243,7 +1243,7 @@ class App:
 
     def save_tasks_to_json(self):
         # Prepare the path for saving tasks to JSON file
-        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"  # Updated path
+        path = f"json_files/{self.entered_username}_jsontask.json"  # Updated path
 
         # Save the current tasks to a JSON file
         with open(path, "w") as f:
@@ -1279,7 +1279,7 @@ class App:
 
     def delete_task(self, category, task_title):
         # Prepare the path for loading existing tasks from the JSON file
-        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"  # Updated path for user-specific JSON
+        path = f"json_files/{self.entered_username}_jsontask.json"  # Updated path for user-specific JSON
 
         # Load existing tasks from the user's JSON file
         with open(path, 'r') as file:
@@ -1304,7 +1304,7 @@ class App:
 
     def archive_task(self, category, task_title, task_info):
         # Prepare the path for the archives file
-        archive_path = f'HCI project/json_files/{self.entered_username}_jsonarchive.json'  # You can also make this dynamic if needed
+        archive_path = f'json_files/{self.entered_username}_jsonarchive.json'  # You can also make this dynamic if needed
 
         # Load existing archives from archives.json
         try:
@@ -1324,7 +1324,7 @@ class App:
 
     def load_tasks(self):
         # Prepare the path for loading the user's tasks
-        path = f"HCI project/json_files/{self.entered_username}_jsontask.json"  # Updated path for user-specific JSON
+        path = f"json_files/{self.entered_username}_jsontask.json"  # Updated path for user-specific JSON
 
         # Load tasks from the user's JSON file
         try:
@@ -1521,7 +1521,7 @@ class App:
         frontFrame.grid_rowconfigure(3, weight=0)  # For add button row
 
         # Load and resize the logo image
-        logo = Image.open("HCI project/logo.png").resize((190, 130), Image.LANCZOS)
+        logo = Image.open("logo.png").resize((190, 130), Image.LANCZOS)
         img = ImageTk.PhotoImage(logo)
         log = tk.Label(frontFrame, image=img, bg="white")
         log.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
@@ -1560,19 +1560,21 @@ class App:
 
         # Create the Treeview widget with specified columns
         self.Stree = ttk.Treeview(
-            self.resultFrame, columns=("Room Number", "Teacher", "Subject", "Time"),
+            self.resultFrame, columns=("Room Number", "Teacher", "Subject", "Time In", "Time Out"),
             show='headings', height=15
         )
         self.Stree.heading("Room Number", text="Room Number")
         self.Stree.heading("Teacher", text="Teacher")
         self.Stree.heading("Subject", text="Subject")
-        self.Stree.heading("Time", text="Time")
+        self.Stree.heading("Time In", text="Time In")
+        self.Stree.heading("Time Out", text="Time Out")
 
         # Configure the columns' width and alignment
         self.Stree.column("Room Number", width=150, anchor="center")
         self.Stree.column("Teacher", width=200, anchor="center")
         self.Stree.column("Subject", width=200, anchor="center")
-        self.Stree.column("Time", width=150, anchor="center")
+        self.Stree.column("Time In", width=150, anchor="center")
+        self.Stree.column("Time Out", width=150, anchor="center")
 
         # Apply the style to the Treeview and pack it into the frame
         self.Stree.configure(style="Custom.Treeview")
@@ -1602,7 +1604,7 @@ class App:
         add_room_button.grid(row=0, column=2, padx=5, pady=5)
 
         # Add Button
-        add_image = Image.open("HCI project/add.png").resize((60, 60), Image.LANCZOS)
+        add_image = Image.open("add.png").resize((60, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add_image)
         add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.AddSchedule)
         add_button.grid(row=4, column=2, padx=10, pady=10, sticky="nsew")
@@ -1612,40 +1614,57 @@ class App:
         self.load_and_display_schedules("Monday")
 
     def load_and_display_schedules(self, day):
-        # Reset the foreground color for all buttons
         for button in self.day_buttons:
-            button.config(fg="black")  # Reset to black for unselected buttons
+            button.config(fg="black")
 
-        # Change the foreground color of the selected button
         current_button = self.day_buttons[["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].index(day)]
-        current_button.config(fg="blue")  # Change color to blue for the selected button
+        current_button.config(fg="blue")
 
-        # File path for retrieving schedules
-        path = f"HCI project/json_files/{self.entered_username}_schedule.json"
+        path = f"json_files/{self.entered_username}_schedule.json"
 
-        # Check if the file exists
         if os.path.exists(path):
             with open(path, 'r') as json_file:
-                self.schedule_data = json.load(json_file)  # Load all schedules into memory
+                self.schedule_data = json.load(json_file)
 
-            # Clear existing entries in the Treeview
             for row in self.Stree.get_children():
                 self.Stree.delete(row)
 
-            # Get schedules for the selected day
             schedules = self.schedule_data.get(day, [])
             
-            # Insert the schedules into the Treeview
             for schedule in schedules:
-                self.Stree.insert("", "end", values=(schedule['room'], schedule['teacher'], schedule['subject'], schedule['time']))
+                self.Stree.insert("", "end", values=(
+                    schedule.get('room', 'N/A'),
+                    schedule.get('teacher', 'N/A'),
+                    schedule.get('subject', 'N/A'),
+                    schedule.get('time_in', 'N/A'),
+                    schedule.get('time_out', 'N/A')
+                ))
+
+            # Load unique teachers, rooms, and subjects from the respective sections in the JSON
+                        # Load unique teachers, rooms, and subjects from the respective sections in the JSON
+            # Load unique teachers, rooms, and subjects from the respective sections in the JSON
+            self.sched_teacher = [teacher for sublist in self.schedule_data.get("Teachers", []) for teacher in sublist]
+            self.sched_room = [room for sublist in self.schedule_data.get("Rooms", []) for room in sublist]
+            self.sched_subject = [subject for sublist in self.schedule_data.get("Subjects", []) for subject in sublist]
+
+            # Ensure that all entries in sched_room and sched_subject are strings
+            self.sched_room = [str(room) for room in self.sched_room]
+            self.sched_subject = [str(subject) for subject in self.sched_subject]
+
+            # Remove duplicates by converting to a set and back to a list
+            self.sched_teacher = list(set(self.sched_teacher))
+            self.sched_room = list(set(self.sched_room))
+            self.sched_subject = list(set(self.sched_subject))
+
         else:
             print("No schedule file found.")
+
     
     
     def AddSchedule(self):
         # Create the Add Schedule window
         self.scheduleWindow = tk.Toplevel(self.root)
-        self.scheduleWindow.geometry("800x700")  # Increased window size
+        self.scheduleWindow.geometry("800x750")
         self.scheduleWindow.title("Add Schedule")
 
         # Label at the top
@@ -1661,112 +1680,133 @@ class App:
         # Teacher ComboBox
         teacher_label = tk.Label(self.scheduleWindow, text="Select Teacher:", font=("Helvetica", 16))
         teacher_label.pack(pady=10)
-        self.sched_teacher = ttk.Combobox(self.scheduleWindow, values=self.sched_teacher, width=40, font=("Helvetica", 14))  # Use sample data
-        self.sched_teacher.pack(pady=10)
+        self.Ssched_teacher = ttk.Combobox(self.scheduleWindow, values=self.sched_teacher, width=40, font=("Helvetica", 14))
+        self.Ssched_teacher.pack(pady=10)
 
         # Subject ComboBox
         subject_label = tk.Label(self.scheduleWindow, text="Select Subject:", font=("Helvetica", 16))
         subject_label.pack(pady=10)
-        self.sched_subject = ttk.Combobox(self.scheduleWindow, values=self.sched_subject, width=40, font=("Helvetica", 14))  # Use sample data
-        self.sched_subject.pack(pady=10)
+        self.Ssched_subject = ttk.Combobox(self.scheduleWindow, values=self.sched_subject, width=40, font=("Helvetica", 14))
+        self.Ssched_subject.pack(pady=10)
 
         # Room ComboBox
         room_label = tk.Label(self.scheduleWindow, text="Select Room:", font=("Helvetica", 16))
         room_label.pack(pady=10)
-        self.sched_room = ttk.Combobox(self.scheduleWindow, values=self.sched_room, width=40, font=("Helvetica", 14))  # Use sample data
-        self.sched_room.pack(pady=10)
+        self.Ssched_room = ttk.Combobox(self.scheduleWindow, values=self.sched_room, width=40, font=("Helvetica", 14))
+        self.Ssched_room.pack(pady=10)
 
         # Time selection frame
         self.time_frame = tk.Frame(self.scheduleWindow)
         self.time_frame.pack(pady=20)
 
-        # Time Label
-        time_label = tk.Label(self.time_frame, text="Select Time:", font=("Helvetica", 16))
-        time_label.grid(row=0, column=0, columnspan=6, pady=10)
+        # Time In label
+        time_in_label = tk.Label(self.time_frame, text="Time In:", font=("Helvetica", 16))
+        time_in_label.grid(row=0, column=0, pady=10)
 
-        # Hour Spinbox (1 to 12)
-        hour_label = tk.Label(self.time_frame, text="Hour:", font=("Helvetica", 14))
-        hour_label.grid(row=1, column=0)
-        self.Shour_spinbox = tk.Spinbox(self.time_frame, from_=1, to=12, width=5, font=("Helvetica", 14))
-        self.Shour_spinbox.grid(row=1, column=1, padx=10)
+        # Hour, Minute, AM/PM for Time In
+        self.time_in_hour = tk.Spinbox(self.time_frame, from_=1, to=12, width=5, font=("Helvetica", 14))
+        self.time_in_hour.grid(row=1, column=0, padx=5)
+        
+        self.time_in_minute = tk.Spinbox(self.time_frame, from_=0, to=59, width=5, font=("Helvetica", 14))
+        self.time_in_minute.grid(row=1, column=1, padx=5)
+        
+        self.time_in_ampm = ttk.Combobox(self.time_frame, values=["AM", "PM"], width=5, font=("Helvetica", 14))
+        self.time_in_ampm.grid(row=1, column=2, padx=5)
+        self.time_in_ampm.current(0)
 
-        # Minute Spinbox (0 to 59)
-        minute_label = tk.Label(self.time_frame, text="Minute:", font=("Helvetica", 14))
-        minute_label.grid(row=1, column=2)
-        self.Sminute_spinbox = tk.Spinbox(self.time_frame, from_=0, to=59, width=5, font=("Helvetica", 14))
-        self.Sminute_spinbox.grid(row=1, column=3, padx=10)
+        # Time Out label
+        time_out_label = tk.Label(self.time_frame, text="Time Out:", font=("Helvetica", 16))
+        time_out_label.grid(row=2, column=0, pady=10)
 
-        # AM/PM Combobox
-        ampm_label = tk.Label(self.time_frame, text="AM/PM:", font=("Helvetica", 14))
-        ampm_label.grid(row=1, column=4)
-        self.Sampm_combobox = ttk.Combobox(self.time_frame, values=["AM", "PM"], width=8, font=("Helvetica", 14))
-        self.Sampm_combobox.grid(row=1, column=5, padx=10)
-        self.Sampm_combobox.current(0)  # Default to AM
+        # Hour, Minute, AM/PM for Time Out
+        self.time_out_hour = tk.Spinbox(self.time_frame, from_=1, to=12, width=5, font=("Helvetica", 14))
+        self.time_out_hour.grid(row=3, column=0, padx=5)
+        
+        self.time_out_minute = tk.Spinbox(self.time_frame, from_=0, to=59, width=5, font=("Helvetica", 14))
+        self.time_out_minute.grid(row=3, column=1, padx=5)
+        
+        self.time_out_ampm = ttk.Combobox(self.time_frame, values=["AM", "PM"], width=5, font=("Helvetica", 14))
+        self.time_out_ampm.grid(row=3, column=2, padx=5)
+        self.time_out_ampm.current(0)
 
         # Submit button
         submit_button = tk.Button(self.scheduleWindow, text="Submit", command=self.submit_schedule, font=("Helvetica", 14))
         submit_button.pack(pady=20)
 
-        
     def submit_schedule(self):
         # Get values from combo boxes and spinboxes
         day = self.day_combobox.get()
-        teacher = self.sched_teacher.get()
-        subject = self.sched_subject.get()
-        room = self.sched_room.get()
-        hour = self.Shour_spinbox.get()
-        minute = self.Sminute_spinbox.get()
-        ampm = self.Sampm_combobox.get()
+        teacher = self.Ssched_teacher.get()
+        subject = self.Ssched_subject.get()
+        room = self.Ssched_room.get()
+        
+        # Get Time In values
+        time_in_hour = self.time_in_hour.get()
+        time_in_minute = self.time_in_minute.get()
+        time_in_ampm = self.time_in_ampm.get()
+        
+        # Get Time Out values
+        time_out_hour = self.time_out_hour.get()
+        time_out_minute = self.time_out_minute.get()
+        time_out_ampm = self.time_out_ampm.get()
 
         # Process the schedule data
-        print(f"Schedule: {day}, {teacher}, {subject}, Room {room} at {hour}:{minute} {ampm}")
+        print(f"Schedule: {day}, {teacher}, {subject}, Room {room} from {time_in_hour}:{time_in_minute} {time_in_ampm} to {time_out_hour}:{time_out_minute} {time_out_ampm}")
 
         # Prepare the schedule data
         schedule_info = {
-            "day": day,
-            "teacher": teacher,
-            "subject": subject,
-            "room": room,
-            "time": f"{hour}:{minute} {ampm}",
+                "day": day,
+                "teacher": teacher,
+                "subject": subject,
+                "room": room,
+                "time_in": f"{time_in_hour}:{time_in_minute} {time_in_ampm}",
+                "time_out": f"{time_out_hour}:{time_out_minute} {time_out_ampm}",
         }
 
         # File path for storing schedules
-        path = f"HCI project/json_files/{self.entered_username}_schedule.json"
+        path = f"json_files/{self.entered_username}_schedule.json"
 
-        # Load existing schedules or initialize a new dictionary
+        # Load existing schedules or initialize a new dictionary with Rooms, Teachers, and Subjects
         if os.path.exists(path):
-            with open(path, 'r') as json_file:
-                all_schedules = json.load(json_file)
+                with open(path, 'r') as json_file:
+                        all_schedules = json.load(json_file)
         else:
-            # Initialize with days from Monday to Saturday
-            all_schedules = {
-                "Monday": [],
-                "Tuesday": [],
-                "Wednesday": [],
-                "Thursday": [],
-                "Friday": [],
-                "Saturday": [],
-            }
+                # Initialize with days from Monday to Saturday and add Rooms, Teachers, and Subjects from lists
+                all_schedules = {
+                        "Monday": [],
+                        "Tuesday": [],
+                        "Wednesday": [],
+                        "Thursday": [],
+                        "Friday": [],
+                        "Saturday": []
+                        
+                }
 
         # Append the new schedule info to the appropriate day
         if day in all_schedules:
-            all_schedules[day].append(schedule_info)
+                all_schedules[day].append(schedule_info)
 
         # Save the updated all_schedules dictionary to the JSON file
         with open(path, 'w') as json_file:
-            json.dump(all_schedules, json_file, indent=4)
-
+                json.dump(all_schedules, json_file, indent=8)
+                
         # Close the schedule window
+        self.Smainwindow.destroy()
         self.scheduleWindow.destroy()
+        self.scheduleMainwindow()
+        
+
+
+
     
     def open_teacher_window(self):
-        self.create_toplevel_window("Add Teachers", self.convert_teacher_to_combo)
+        self.create_toplevel_window("Teachers", self.convert_teacher_to_combo)
 
     def open_room_window(self):
-        self.create_toplevel_window("Add Room Numbers", self.convert_room_to_combo)
+        self.create_toplevel_window("Rooms", self.convert_room_to_combo)
 
     def open_subject_window(self):
-        self.create_toplevel_window("Add Subjects", self.convert_subject_to_combo)
+        self.create_toplevel_window("Subjects", self.convert_subject_to_combo)
 
     def create_toplevel_window(self, title, convert_function):
         # Create a Toplevel window
@@ -1777,25 +1817,68 @@ class App:
         text_box = tk.Text(top_window, width=50, height=10, font=("Helvetica", 14))  # Increased size and font
         text_box.pack(pady=15)
 
+        # Load the appropriate data into the text box based on the title
+        if title == "Teachers":
+                data_to_display = self.sched_teacher
+        elif title == "Rooms":
+                data_to_display = self.sched_room
+        elif title == "Subjects":
+                data_to_display = self.sched_subject
+        else:
+                data_to_display = []  # Empty list for any other titles
+
+        # Prepare a formatted string for the text box
+        if data_to_display:
+                combined_data = "\n".join(data_to_display)
+        else:
+                combined_data = "No data available."
+
+        # Insert the combined data into the text box
+        text_box.insert(tk.END, combined_data)
+
         # Button to convert text to values and store them
-        convert_button = tk.Button(top_window, text="Convert to Values", command=lambda: convert_function(text_box), font=("Helvetica", 14))  # Increased font size
+        convert_button = tk.Button(top_window, text="Convert to Values", command=lambda: convert_function(text_box, title), font=("Helvetica", 14))  # Increased font size
         convert_button.pack(pady=10)
 
-    def convert_teacher_to_combo(self, text_box):
+    def convert_teacher_to_combo(self, text_box, title):
         items = text_box.get("1.0", tk.END).strip().split("\n")
-        self.sched_teacher = items  # Store in class attribute
+        # Append new items to sched_teacher and ensure uniqueness
+        self.sched_teacher.extend(item for item in items if item and item not in self.sched_teacher)
         text_box.delete("1.0", tk.END)  # Clear the text box after conversion
+        self.update_schedule(title, items)
 
-    def convert_room_to_combo(self, text_box):
+    def convert_room_to_combo(self, text_box, title):
         items = text_box.get("1.0", tk.END).strip().split("\n")
-        self.sched_room = items  # Store in class attribute
+        # Append new items to sched_room and ensure uniqueness
+        self.sched_room.extend(item for item in items if item and item not in self.sched_room)
         text_box.delete("1.0", tk.END)  # Clear the text box after conversion
+        self.update_schedule(title, items)
 
-    def convert_subject_to_combo(self, text_box):
+    def convert_subject_to_combo(self, text_box, title):
         items = text_box.get("1.0", tk.END).strip().split("\n")
-        self.sched_subject = items  # Store in class attribute
+        # Append new items to sched_subject and ensure uniqueness
+        self.sched_subject.extend(item for item in items if item and item not in self.sched_subject)
         text_box.delete("1.0", tk.END)  # Clear the text box after conversion
+        self.update_schedule(title, items)
 
+        
+        
+        
+    def update_schedule(self, list_type, new_value):
+        json_file = f"json_files/{self.entered_username}_schedule.json"
+        schedule = {"Rooms": [], "Teachers": [], "Subjects": []}  # Default structure
+
+        try:
+                with open(json_file, 'r') as file:
+                        schedule = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+                schedule = {"Rooms": [], "Teachers": [], "Subjects": []}  # Initialize if file doesn't exist
+
+        if list_type in schedule:
+                schedule[list_type].append(new_value)
+
+        with open(json_file, 'w') as file:
+                json.dump(schedule, file, indent=4)
 
 root = tk.Tk()
 app = App(root)
