@@ -11,6 +11,9 @@ import time
 import threading
 from tkinter import Label,Frame,Button
 import mysql.connector
+import speech_recognition as sr
+import pygame
+
 
 
 class App:
@@ -29,6 +32,10 @@ class App:
         self.sched_teacher = []
         self.sched_room = []
         self.sched_subject = []
+        self.current_button = "Monday"
+        self.recognizer = sr.Recognizer()
+        self.microphone = sr.Microphone()
+        
         # Call the main window setup
         
         self.root.title("Login")
@@ -274,6 +281,7 @@ class App:
         
         
     def Amainwindow(self):
+        self.run()
         self.login_window.destroy()
         self.category = "Academic"
         self.load_tasks()
@@ -1503,10 +1511,11 @@ class App:
             self.duedate_entry.config(fg='#518D45')
     
     def scheduleMainwindow(self):
+        
         self.Smainwindow = tk.Toplevel(self.root)
         self.Smainwindow.geometry("1430x800")
         self.Smainwindow.title("Class Schedule Planner")
-
+        self.Smainwindow.attributes('-fullscreen', True)
         # Create the main frame
         frontFrame = tk.Frame(self.Smainwindow, bg="white")
         frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -1612,56 +1621,61 @@ class App:
 
         # Load the schedules for the default day (Monday)
         self.load_and_display_schedules("Monday")
-
-    def load_and_display_schedules(self, day):
-        for button in self.day_buttons:
-            button.config(fg="black")
-
-        current_button = self.day_buttons[["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].index(day)]
-        current_button.config(fg="blue")
-
-        path = f"json_files/{self.entered_username}_schedule.json"
-
-        if os.path.exists(path):
-            with open(path, 'r') as json_file:
-                self.schedule_data = json.load(json_file)
-
-            for row in self.Stree.get_children():
-                self.Stree.delete(row)
-
-            schedules = self.schedule_data.get(day, [])
-            
-            for schedule in schedules:
-                self.Stree.insert("", "end", values=(
-                    schedule.get('room', 'N/A'),
-                    schedule.get('teacher', 'N/A'),
-                    schedule.get('subject', 'N/A'),
-                    schedule.get('time_in', 'N/A'),
-                    schedule.get('time_out', 'N/A')
-                ))
-
-            # Load unique teachers, rooms, and subjects from the respective sections in the JSON
-                        # Load unique teachers, rooms, and subjects from the respective sections in the JSON
-            # Load unique teachers, rooms, and subjects from the respective sections in the JSON
-            self.sched_teacher = [teacher for sublist in self.schedule_data.get("Teachers", []) for teacher in sublist]
-            self.sched_room = [room for sublist in self.schedule_data.get("Rooms", []) for room in sublist]
-            self.sched_subject = [subject for sublist in self.schedule_data.get("Subjects", []) for subject in sublist]
-
-            # Ensure that all entries in sched_room and sched_subject are strings
-            self.sched_room = [str(room) for room in self.sched_room]
-            self.sched_subject = [str(subject) for subject in self.sched_subject]
-
-            # Remove duplicates by converting to a set and back to a list
-            self.sched_teacher = list(set(self.sched_teacher))
-            self.sched_room = list(set(self.sched_room))
-            self.sched_subject = list(set(self.sched_subject))
-
-        else:
-            print("No schedule file found.")
-
+        self.Stree.bind("<Double-1>", self.show_item)
     
-    
-    def AddSchedule(self):
+    def show_item(self, event):
+        # Get selected item from Treeview
+        selected_item = self.Stree.focus()
+        if not selected_item:
+            return  # If no item is selected, do nothing
+
+        # Get the item values
+        item_values = self.Stree.item(selected_item, "values")
+        if not item_values:
+            return  # If item has no values, do nothing
+
+        # Create top-level window
+        item_window = tk.Toplevel(self.Smainwindow)
+        item_window.title("Item Details")
+        item_window.geometry("400x400")
+
+        # Display the item details in the window
+        labels = ["Room Number", "Teacher", "Subject", "Time In", "Time Out"]
+        for i, value in enumerate(item_values):
+            label = tk.Label(item_window, text=f"{labels[i]}: {value}", font=("Helvetica", 14))
+            label.pack(anchor="w", padx=10, pady=5)
+
+        # Add Edit and Delete labels that act like buttons
+        button_frame = tk.Frame(item_window)
+        button_frame.pack(pady=20)
+        
+
+        # Edit Label (acting as a button)
+        edit_image = Image.open("edit.png").resize((40, 40), Image.LANCZOS)
+        edit_icon = ImageTk.PhotoImage(edit_image)
+        edit_label = tk.Label(button_frame, image=edit_icon, cursor="hand2")
+        edit_label.image = edit_icon
+        edit_label.grid(row=0, column=0, padx=10)
+        edit_label.bind("<Button-1>", lambda event: self.edit_item(selected_item,item_values))
+
+        # Delete Label (acting as a button)
+        delete_image = Image.open("delete.png").resize((40, 40), Image.LANCZOS)
+        delete_icon = ImageTk.PhotoImage(delete_image)
+        delete_label = tk.Label(button_frame, image=delete_icon, cursor="hand2")
+        delete_label.image = delete_icon
+        delete_label.grid(row=0, column=1, padx=10)
+        delete_label.bind("<Button-1>", lambda event: self.delete_item(selected_item,item_values))
+        
+    def edit_item(self,selected_item,item_values):
+        self.AddSchedule(12,selected_item,item_values)
+        
+        
+        
+        
+        
+        
+        
+    def AddSchedule(self,v,selected_item,item_values):
         # Create the Add Schedule window
         self.scheduleWindow = tk.Toplevel(self.root)
         self.scheduleWindow.geometry("800x750")
@@ -1730,10 +1744,111 @@ class App:
         self.time_out_ampm.current(0)
 
         # Submit button
-        submit_button = tk.Button(self.scheduleWindow, text="Submit", command=self.submit_schedule, font=("Helvetica", 14))
-        submit_button.pack(pady=20)
+        submit_button = tk.Button(self.scheduleWindow, text="Submit", command=lambda:self.submit_schedule(v,selected_item,item_values), font=("Helvetica", 14))
+        submit_button.pack(pady=20) 
+        
+        
+        
+    def delete_item(self, selected_item, values):
+        # Delete item from Treeview
+        self.Stree.delete(selected_item)
 
-    def submit_schedule(self):
+        # Load the JSON file associated with the entered username
+        path = f"json_files/{self.entered_username}_schedule.json"
+        try:
+                with open(path, "r") as file:
+                        schedule_data = json.load(file)
+        except FileNotFoundError:
+                print("JSON file not found.")
+                return
+
+        # Get the day and find the corresponding list of schedules
+        day = self.day  # Assuming self.current_button stores the current day
+        print(day)
+        if day in schedule_data:
+                # Filter out the specific schedule entry by matching teacher and subject
+                schedule_data[day] = [
+                        item for item in schedule_data[day]
+                        if not (item["teacher"] == values[1] and item["subject"] == values[2])
+                ]
+
+                # Save the updated JSON data back to the file
+                with open(path, "w") as file:
+                        json.dump(schedule_data, file, indent=4)
+                print(f"Deleted schedule for {values[1]} - {values[2]} on {day}")
+        else:
+                print(f"No schedule found for day: {day}")
+        
+                
+
+    def load_and_display_schedules(self, day):
+        for button in self.day_buttons:
+                button.config(fg="black")
+
+        self.current_button = self.day_buttons[["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].index(day)]
+        self.current_button.config(fg="blue")
+        self.day = day
+
+        path = f"json_files/{self.entered_username}_schedule.json"
+
+        # Check if the schedule file exists
+        if os.path.exists(path):
+                with open(path, 'r') as json_file:
+                        self.schedule_data = json.load(json_file)
+
+                for row in self.Stree.get_children():
+                        self.Stree.delete(row)
+
+                schedules = self.schedule_data.get(day, [])
+                
+                for schedule in schedules:
+                        self.Stree.insert("", "end", values=(
+                                schedule.get('room', 'N/A'),
+                                schedule.get('teacher', 'N/A'),
+                                schedule.get('subject', 'N/A'),
+                                schedule.get('time_in', 'N/A'),
+                                schedule.get('time_out', 'N/A')
+                        ))
+
+                # Load unique teachers, rooms, and subjects from the respective sections in the JSON
+                self.sched_teacher = [teacher for sublist in self.schedule_data.get("Teachers", []) for teacher in sublist]
+                self.sched_room = [room for sublist in self.schedule_data.get("Rooms", []) for room in sublist]
+                self.sched_subject = [subject for sublist in self.schedule_data.get("Subjects", []) for subject in sublist]
+
+                # Ensure that all entries in sched_room and sched_subject are strings
+                self.sched_room = [str(room) for room in self.sched_room]
+                self.sched_subject = [str(subject) for subject in self.sched_subject]
+
+                # Remove duplicates by converting to a set and back to a list
+                self.sched_teacher = list(set(self.sched_teacher))
+                self.sched_room = list(set(self.sched_room))
+                self.sched_subject = list(set(self.sched_subject))
+
+        else:
+                # Create a new schedule JSON file with the initial structure if it does not exist
+                all_schedules = {
+                        "Monday": [],
+                        "Tuesday": [],
+                        "Wednesday": [],
+                        "Thursday": [],
+                        "Friday": [],
+                        "Saturday": [],
+                        "Rooms": [],
+                        "Teachers": [],
+                        "Subjects": []
+                }
+                
+                # Write the new structure to the JSON file
+                with open(path, 'w') as json_file:
+                        json.dump(all_schedules, json_file, indent=4)
+
+                print("New schedule file created.")
+
+    
+    
+    
+
+    def submit_schedule(self,v,selected_item,item_values):
         # Get values from combo boxes and spinboxes
         day = self.day_combobox.get()
         teacher = self.Ssched_teacher.get()
@@ -1789,16 +1904,14 @@ class App:
         # Save the updated all_schedules dictionary to the JSON file
         with open(path, 'w') as json_file:
                 json.dump(all_schedules, json_file, indent=8)
-                
+        if v == 12:
+            self.delete_item(selected_item,item_values)
+                    
         # Close the schedule window
         self.Smainwindow.destroy()
         self.scheduleWindow.destroy()
         self.scheduleMainwindow()
         
-
-
-
-    
     def open_teacher_window(self):
         self.create_toplevel_window("Teachers", self.convert_teacher_to_combo)
 
@@ -1813,32 +1926,77 @@ class App:
         self.Stop_window = tk.Toplevel(self.root)
         self.Stop_window.title(title)
 
+        # Frame to hold the line numbers and text box
+        frame = tk.Frame(self.Stop_window)
+        frame.pack(pady=15)
+
+        # Text box for line numbers
+        line_numbers = tk.Text(frame, width=4, height=10, font=("Helvetica", 14), bg="lightgrey", state="disabled")
+        line_numbers.pack(side=tk.LEFT, fill=tk.Y)
+
         # Multi-line text box for input
-        text_box = tk.Text(self.Stop_window, width=50, height=10, font=("Helvetica", 14))  # Increased size and font
-        text_box.pack(pady=15)
+        text_box = tk.Text(frame, width=50, height=10, font=("Helvetica", 14))  # Increased size and font
+        text_box.pack(side=tk.RIGHT, fill=tk.BOTH)
 
         # Load the appropriate data into the text box based on the title
         if title == "Teachers":
-                data_to_display = self.sched_teacher
+            data_to_display = self.sched_teacher
         elif title == "Rooms":
-                data_to_display = self.sched_room
+            data_to_display = self.sched_room
         elif title == "Subjects":
-                data_to_display = self.sched_subject
+            data_to_display = self.sched_subject
         else:
-                data_to_display = []  # Empty list for any other titles
+            data_to_display = []  # Empty list for any other titles
 
         # Prepare a formatted string for the text box
         if data_to_display:
-                combined_data = "\n".join(data_to_display)
+            combined_data = "\n".join(data_to_display)
         else:
-                combined_data = "No data available."
+            combined_data = "No data available."
 
         # Insert the combined data into the text box
         text_box.insert(tk.END, combined_data)
 
-        # Button to convert text to values and store them
-        convert_button = tk.Button(self.Stop_window, text="Convert to Values", command=lambda: convert_function(text_box, title), font=("Helvetica", 14))  # Increased font size
-        convert_button.pack(pady=10)
+        # Function to update line numbers
+        def update_line_numbers(event=None):
+            line_numbers.config(state="normal")
+            line_numbers.delete(1.0, tk.END)
+            line_count = int(text_box.index('end-1c').split('.')[0])
+            for i in range(1, line_count + 1):
+                line_numbers.insert(tk.END, f"{i}\n")
+            line_numbers.config(state="disabled")
+
+        # Bind the text box to update line numbers on key release
+        text_box.bind("<KeyRelease>", update_line_numbers)
+        update_line_numbers()  # Initial call to populate line numbers
+
+        # Frame for buttons to center them
+        button_frame = tk.Frame(self.Stop_window)
+        button_frame.pack(pady=10)
+
+        # Button to save text from the text box
+        save_button = tk.Button(
+            button_frame,
+            text="Save",
+            command=lambda: convert_function(text_box, title),
+            font=("Helvetica", 14)  # Increased font size
+        )
+        save_button.pack(side=tk.LEFT, padx=5)
+
+        # Load and resize the delete image
+        original_image = Image.open("delete.png")  # Open the original image
+        resized_image = original_image.resize((50, 50), Image.LANCZOS)  # Resize to 20x20 pixels
+        delete_image = ImageTk.PhotoImage(resized_image)  # Convert to PhotoImage
+
+        # Button to delete the text in the text box
+        delete_button = tk.Button(
+            button_frame,
+            image=delete_image,
+            command=lambda: text_box.delete(1.0, tk.END),
+            borderwidth=0  # Removes the button border
+        )
+        delete_button.image = delete_image  # Keep a reference to avoid garbage collection
+        delete_button.pack(side=tk.LEFT, padx=5)
 
     def convert_teacher_to_combo(self, text_box, title):
         items = text_box.get("1.0", tk.END).strip().split("\n")
@@ -1885,7 +2043,63 @@ class App:
         self.Smainwindow.destroy()
         self.scheduleMainwindow()
         self.Stop_window.destroy()
+        
+    def recognize_speech_from_mic(self, timeout=5, phrase_time_limit=3):
+        with self.microphone as source:
+            print("Adjusting for ambient noise...")
+            self.recognizer.adjust_for_ambient_noise(source)
+            print("Please speak now...")
+
+            try:
+                audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
+            except sr.WaitTimeoutError:
+                return {"success": False, "error": "Listening timed out", "transcription": None}
+
+            response = {"success": True, "error": None, "transcription": None}
+
+            try:
+                response["transcription"] = self.recognizer.recognize_google(audio)
+            except sr.UnknownValueError:
+                response["error"] = "Google Speech Recognition could not understand the audio"
+            except sr.RequestError as e:
+                response["error"] = f"Could not request results from Google Speech Recognition service; {e}"
+                response["success"] = False
+
+            return response
+
+    def start(self):
+        pygame.mixer.init()
+        self.running = True
+        while self.running:
+            try:
+                response = self.recognize_speech_from_mic()
+                if not response["success"]:
+                    print("Error: ", response["error"])
+                else:
+                    print("You said: " + response["transcription"])
+                    res = response["transcription"].lower()
+
+                    if res == "hey luna":
+                        pygame.mixer.music.load("boss.mp3")
+                        pygame.mixer.music.play()
+                        print("Activation command received. Listening for commands...")
+                        # You can keep this to continuously listen after activation.
+                    elif res == "show class schedule":
+                        pygame.mixer.music.load("class_sched.mp3")
+                        pygame.mixer.music.play()
+                        self.scheduleMainwindow()
+                    else:
+                        print("Command not recognized.")
+
+            except TypeError:
+                print("An error occurred")
+            except KeyboardInterrupt:
+                print("\nProgram interrupted by user")
+                self.running = False  # Stop the loop  
                 
+    def run(self):
+        """Start the speech recognizer in a separate thread."""
+        threading.Thread(target=self.start, daemon=True).start()    
         
 
 root = tk.Tk()

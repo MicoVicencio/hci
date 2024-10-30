@@ -1,85 +1,19 @@
 {
-    "Monday": [
+    "Monday": [],
+    "Tuesday": [],
+    "Wednesday": [
         {
-            "day": "Monday",
-            "teacher": "fds",
-            "subject": "sdf",
-            "room": "sdf",
-            "time_in": "2:0 AM",
-            "time_out": "1:0 AM"
-        },
-        {
-            "day": "Monday",
-            "teacher": "ads",
-            "subject": "asd",
-            "room": "asd",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        },
-        {
-            "day": "Monday",
-            "teacher": "dsaa",
-            "subject": "asd",
-            "room": "1213",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        },
-        {
-            "day": "Monday",
-            "teacher": "tttt",
-            "subject": "asd",
-            "room": "1213",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        },
-        {
-            "day": "Monday",
-            "teacher": "tttt",
-            "subject": "asd",
-            "room": "1213",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        },
-        {
-            "day": "Monday",
-            "teacher": "ffff",
-            "subject": "asd",
-            "room": "1213",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        },
-        {
-            "day": "Monday",
-            "teacher": "mico",
-            "subject": "asd",
-            "room": "1213",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
+            "day": "Wednesday",
+            "teacher": "kiko",
+            "subject": "hci",
+            "room": "1o07",
+            "time_in": "6:0 AM",
+            "time_out": "5:0 AM"
         }
     ],
-    "Tuesday": [
-        {
-            "day": "Tuesday",
-            "teacher": "kikpo",
-            "subject": "prog",
-            "room": "107",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        }
-    ],
-    "Wednesday": [],
     "Thursday": [],
     "Friday": [],
-    "Saturday": [
-        {
-            "day": "Saturday",
-            "teacher": "dsaa",
-            "subject": "asd",
-            "room": "1213",
-            "time_in": "1:0 AM",
-            "time_out": "1:0 AM"
-        }
-    ],
+    "Saturday": [],
     "Rooms": [
         [
             "109",
@@ -89,7 +23,8 @@
     ],
     "Teachers": [
         [
-            "ganggong"
+            "mico",
+            "kiko"
         ]
     ],
     "Subjects": [

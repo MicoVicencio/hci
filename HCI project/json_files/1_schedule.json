@@ -1,0 +1,32 @@
+{
+        "Monday": [],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [
+                {
+                        "day": "Thursday",
+                        "teacher": "mic",
+                        "subject": "asd",
+                        "room": "No data available.",
+                        "time_in": "1:0 AM",
+                        "time_out": "1:0 AM"
+                }
+        ],
+        "Friday": [],
+        "Saturday": [],
+        "Rooms": [
+                [
+                        "No data available."
+                ]
+        ],
+        "Teachers": [
+                [
+                        "mic"
+                ]
+        ],
+        "Subjects": [
+                [
+                        "asd"
+                ]
+        ]
+}
