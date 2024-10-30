@@ -1810,11 +1810,11 @@ class App:
 
     def create_toplevel_window(self, title, convert_function):
         # Create a Toplevel window
-        top_window = tk.Toplevel(self.root)
-        top_window.title(title)
+        self.Stop_window = tk.Toplevel(self.root)
+        self.Stop_window.title(title)
 
         # Multi-line text box for input
-        text_box = tk.Text(top_window, width=50, height=10, font=("Helvetica", 14))  # Increased size and font
+        text_box = tk.Text(self.Stop_window, width=50, height=10, font=("Helvetica", 14))  # Increased size and font
         text_box.pack(pady=15)
 
         # Load the appropriate data into the text box based on the title
@@ -1837,7 +1837,7 @@ class App:
         text_box.insert(tk.END, combined_data)
 
         # Button to convert text to values and store them
-        convert_button = tk.Button(top_window, text="Convert to Values", command=lambda: convert_function(text_box, title), font=("Helvetica", 14))  # Increased font size
+        convert_button = tk.Button(self.Stop_window, text="Convert to Values", command=lambda: convert_function(text_box, title), font=("Helvetica", 14))  # Increased font size
         convert_button.pack(pady=10)
 
     def convert_teacher_to_combo(self, text_box, title):
@@ -1846,6 +1846,7 @@ class App:
         self.sched_teacher.extend(item for item in items if item and item not in self.sched_teacher)
         text_box.delete("1.0", tk.END)  # Clear the text box after conversion
         self.update_schedule(title, items)
+        
 
     def convert_room_to_combo(self, text_box, title):
         items = text_box.get("1.0", tk.END).strip().split("\n")
@@ -1853,6 +1854,7 @@ class App:
         self.sched_room.extend(item for item in items if item and item not in self.sched_room)
         text_box.delete("1.0", tk.END)  # Clear the text box after conversion
         self.update_schedule(title, items)
+       
 
     def convert_subject_to_combo(self, text_box, title):
         items = text_box.get("1.0", tk.END).strip().split("\n")
@@ -1860,6 +1862,7 @@ class App:
         self.sched_subject.extend(item for item in items if item and item not in self.sched_subject)
         text_box.delete("1.0", tk.END)  # Clear the text box after conversion
         self.update_schedule(title, items)
+        
 
         
         
@@ -1875,10 +1878,15 @@ class App:
                 schedule = {"Rooms": [], "Teachers": [], "Subjects": []}  # Initialize if file doesn't exist
 
         if list_type in schedule:
-                schedule[list_type].append(new_value)
+                schedule[list_type]= [new_value]
 
         with open(json_file, 'w') as file:
                 json.dump(schedule, file, indent=4)
+        self.Smainwindow.destroy()
+        self.scheduleMainwindow()
+        self.Stop_window.destroy()
+                
+        
 
 root = tk.Tk()
 app = App(root)

@@ -57,7 +57,16 @@
             "time_out": "1:0 AM"
         }
     ],
-    "Tuesday": [],
+    "Tuesday": [
+        {
+            "day": "Tuesday",
+            "teacher": "kikpo",
+            "subject": "prog",
+            "room": "107",
+            "time_in": "1:0 AM",
+            "time_out": "1:0 AM"
+        }
+    ],
     "Wednesday": [],
     "Thursday": [],
     "Friday": [],
@@ -73,45 +82,22 @@
     ],
     "Rooms": [
         [
-            "1213"
-        ],
-        [
             "109",
-            "108",
-            "107",
-            "106"
-        ],
-        [
-            "107",
-            "108",
-            "1213",
-            "106",
-            "109",
-            "comlab"
+            "10888",
+            "1o07"
         ]
     ],
     "Teachers": [
         [
-            "Mico",
-            "bianan",
-            "andi"
+            "ganggong"
         ]
     ],
     "Subjects": [
         [
-            "asd"
-        ],
-        [
-            "tol"
-        ],
-        [
-            "tol"
-        ],
-        [
-            "asd",
-            "tol",
+            "analysis",
             "hci",
-            "mariwana"
+            "prog",
+            "web"
         ]
     ]
 }
