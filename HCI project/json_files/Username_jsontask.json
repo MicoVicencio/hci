@@ -9,18 +9,25 @@
         }
     },
     "Academic": {
-        "Submit Assignment11": {
-            "subject": "Art",
-            "description": "sa",
-            "Due Date": "10/25/24 1:00 AM",
-            "Priority": "Low",
-            "Status": "Done"
-        },
         "Submit Assignment12": {
             "subject": "Science",
             "description": "gffg",
             "Due Date": "10/30/24 1:00 AM",
             "Priority": "Low",
+            "Status": "Overdue"
+        },
+        "Submit Assignment2": {
+            "subject": "History",
+            "description": "dsada",
+            "Due Date": "10/30/24 1:00 AM",
+            "Priority": "Medium",
+            "Status": "Overdue"
+        },
+        "Submit Assignment11": {
+            "subject": "History",
+            "description": "dvds",
+            "Due Date": "10/30/24 1:00 AM",
+            "Priority": "High",
             "Status": "Overdue"
         }
     }

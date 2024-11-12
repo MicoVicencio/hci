@@ -15,7 +15,6 @@ import speech_recognition as sr
 import pygame
 
 
-
 class App:
     def __init__(self, root):
         self.root = root
@@ -80,21 +79,21 @@ class App:
         # Clear the main frame
         self.login_window = tk.Toplevel()
         self.login_window.title("Login")
-        self.main_frame = Frame(self.login_window, bg="#518d45", height=500, width=900)
+        self.login_window.config(bg="#518d45")
+        self.main_frame = Frame(self.login_window, bg="white", height=500, width=900)
         self.main_frame.pack_propagate(False)
         self.main_frame.pack(padx=50, pady=50)
         self.login_window.geometry("900x600")
-        self.login_window.config(bg="white")
-        self.main_frame.config(bg="#518d45")
+        
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
         # Create title label
-        title_label = Label(self.main_frame, text="Login", bg="#518d45", fg="white", font=("Arial", 20, "bold"))
+        title_label = Label(self.main_frame, text="Login", bg="white", fg="#518d45", font=("Arial", 20, "bold"))
         title_label.pack(pady=10)
 
         # Create image label
-        label = Label(self.main_frame, image=self.photo, bg="#518d45")
+        label = Label(self.main_frame, image=self.photo, bg="white")
         label.pack(padx=10, pady=10)
 
         # Username entry
@@ -290,6 +289,7 @@ class App:
         # Create the main frame
         frontFrame = tk.Frame(self.mainwindow, bg="white")
         frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.mainwindow.state("zoomed")
 
         # Configure grid for the main frame
         frontFrame.grid_columnconfigure(0, weight=1)  # For logo
@@ -440,9 +440,9 @@ class App:
         
         
         # Configure tags for the Treeview
-        self.tree.tag_configure('high_priority', background='#EF5350', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('medium_priority', background='#EF5350', foreground='black', font=("Arial", 16))
-        self.tree.tag_configure('low_priority', background='#EF5350', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('high_priority', background='#ffc6cf', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('medium_priority', background='#ffeb9c', foreground='black', font=("Arial", 16))
+        self.tree.tag_configure('low_priority', background='#c6efce', foreground='black', font=("Arial", 16))
         self.tree.tag_configure('done', background='#43A047', foreground='black', font=("Arial", 16))  # Tag for done tasks
 
         try:
@@ -515,7 +515,15 @@ class App:
         
 
     time.sleep(1)
-        
+    def logout1(self):
+        msg = messagebox.askyesno("Logout Confirmation", "Do you want to logout?")
+        if msg:
+            self.username = ""
+            self.password = ""
+            self.mainwindow.destroy()
+            self.Smainwindow.destroy()
+            self.show_login() 
+            
         
     def logout(self,event):
         
@@ -525,7 +533,9 @@ class App:
             self.username = ""
             self.password = ""
             self.mainwindow.destroy()
+            self.Smainwindow.destroy()
             self.show_login()  
+            
 
     def check_due_dates(self):
         """Check the due dates of tasks and alert if a task is overdue."""
@@ -1515,7 +1525,7 @@ class App:
         self.Smainwindow = tk.Toplevel(self.root)
         self.Smainwindow.geometry("1430x800")
         self.Smainwindow.title("Class Schedule Planner")
-        self.Smainwindow.attributes('-fullscreen', True)
+        self.Smainwindow.state("zoomed")
         # Create the main frame
         frontFrame = tk.Frame(self.Smainwindow, bg="white")
         frontFrame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -1615,7 +1625,7 @@ class App:
         # Add Button
         add_image = Image.open("add.png").resize((60, 60), Image.LANCZOS)
         ad = ImageTk.PhotoImage(add_image)
-        add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=self.AddSchedule)
+        add_button = tk.Button(frontFrame, image=ad, bg="white", borderwidth=0, command=lambda:self.AddSchedule("","",""))
         add_button.grid(row=4, column=2, padx=10, pady=10, sticky="nsew")
         add_button.image = ad
 
@@ -1635,23 +1645,23 @@ class App:
             return  # If item has no values, do nothing
 
         # Create top-level window
-        item_window = tk.Toplevel(self.Smainwindow)
-        item_window.title("Item Details")
-        item_window.geometry("400x400")
+        self.item_window = tk.Toplevel(self.Smainwindow)
+        self.item_window.title("Item Details")
+        self.item_window.geometry("400x400")
 
         # Display the item details in the window
         labels = ["Room Number", "Teacher", "Subject", "Time In", "Time Out"]
         for i, value in enumerate(item_values):
-            label = tk.Label(item_window, text=f"{labels[i]}: {value}", font=("Helvetica", 14))
+            label = tk.Label(self.item_window, text=f"{labels[i]}: {value}", font=("Helvetica", 14))
             label.pack(anchor="w", padx=10, pady=5)
 
         # Add Edit and Delete labels that act like buttons
-        button_frame = tk.Frame(item_window)
+        button_frame = tk.Frame(self.item_window)
         button_frame.pack(pady=20)
         
 
         # Edit Label (acting as a button)
-        edit_image = Image.open("edit.png").resize((40, 40), Image.LANCZOS)
+        edit_image = Image.open("edit.png").resize((70, 70), Image.LANCZOS)
         edit_icon = ImageTk.PhotoImage(edit_image)
         edit_label = tk.Label(button_frame, image=edit_icon, cursor="hand2")
         edit_label.image = edit_icon
@@ -1659,7 +1669,7 @@ class App:
         edit_label.bind("<Button-1>", lambda event: self.edit_item(selected_item,item_values))
 
         # Delete Label (acting as a button)
-        delete_image = Image.open("delete.png").resize((40, 40), Image.LANCZOS)
+        delete_image = Image.open("delete.png").resize((70, 70), Image.LANCZOS)
         delete_icon = ImageTk.PhotoImage(delete_image)
         delete_label = tk.Label(button_frame, image=delete_icon, cursor="hand2")
         delete_label.image = delete_icon
@@ -1668,13 +1678,7 @@ class App:
         
     def edit_item(self,selected_item,item_values):
         self.AddSchedule(12,selected_item,item_values)
-        
-        
-        
-        
-        
-        
-        
+
     def AddSchedule(self,v,selected_item,item_values):
         # Create the Add Schedule window
         self.scheduleWindow = tk.Toplevel(self.root)
@@ -1778,6 +1782,7 @@ class App:
                 print(f"Deleted schedule for {values[1]} - {values[2]} on {day}")
         else:
                 print(f"No schedule found for day: {day}")
+        self.item_window.destroy()
         
                 
 
@@ -2088,8 +2093,26 @@ class App:
                         pygame.mixer.music.load("class_sched.mp3")
                         pygame.mixer.music.play()
                         self.scheduleMainwindow()
+                    elif res == "logout":
+                        pygame.mixer.music.load("log.mp3")
+                        pygame.mixer.music.play()
+                        self.logout1()   
+                    elif res == "add task":
+                        pygame.mixer.music.load("adding.mp3")
+                        pygame.mixer.music.play()
+                        self.open_task_window() 
+                    elif res == "add schedule":
+                        pygame.mixer.music.load("add_sched.mp3")
+                        pygame.mixer.music.play()
+                        self.AddSchedule("","","") 
                     else:
                         print("Command not recognized.")
+                        pygame.mixer.music.load("again.mp3")
+                        pygame.mixer.music.play()
+                        
+                # Wait for the audio to finish playing before continuing
+                while pygame.mixer.music.get_busy():
+                    pygame.time.delay(100)  # Check every 100 milliseconds        
 
             except TypeError:
                 print("An error occurred")

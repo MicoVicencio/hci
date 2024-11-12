@@ -1,38 +1,38 @@
 {
-    "Monday": [],
-    "Tuesday": [],
-    "Wednesday": [
-        {
-            "day": "Wednesday",
-            "teacher": "kiko",
-            "subject": "hci",
-            "room": "1o07",
-            "time_in": "6:0 AM",
-            "time_out": "5:0 AM"
-        }
-    ],
-    "Thursday": [],
-    "Friday": [],
-    "Saturday": [],
-    "Rooms": [
-        [
-            "109",
-            "10888",
-            "1o07"
+        "Monday": [],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [],
+        "Friday": [],
+        "Saturday": [
+                {
+                        "day": "Saturday",
+                        "teacher": "mico",
+                        "subject": "analysis",
+                        "room": "10888",
+                        "time_in": "1:0 AM",
+                        "time_out": "1:0 AM"
+                }
+        ],
+        "Rooms": [
+                [
+                        "109",
+                        "10888",
+                        "1o07"
+                ]
+        ],
+        "Teachers": [
+                [
+                        "mico",
+                        "kiko"
+                ]
+        ],
+        "Subjects": [
+                [
+                        "analysis",
+                        "hci",
+                        "prog",
+                        "web"
+                ]
         ]
-    ],
-    "Teachers": [
-        [
-            "mico",
-            "kiko"
-        ]
-    ],
-    "Subjects": [
-        [
-            "analysis",
-            "hci",
-            "prog",
-            "web"
-        ]
-    ]
 }
